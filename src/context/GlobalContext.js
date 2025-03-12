@@ -30,14 +30,16 @@ const savedEventsReducer = (state, { type, payload }) => {
 };
 const savedVenuesReducer = (state, { type, payload }) => {
   switch (type) {
-    case "push":
-      return [...state, { ...payload, id: Date.now() }];
-    case "update":
-      return state.map(booking => booking.id === payload.id ? payload : booking);
-    case "delete":
-      return state.filter(booking => booking.id !== payload.id);
+    case 'push':
+      return [...state, payload];
+    case 'update':
+      return state.map(venue => 
+        venue.id === payload.id ? payload : venue
+      );
+    case 'delete':
+      return state.filter(venue => venue.id !== payload.id);
     default:
-      throw new Error("Invalid venue action type");
+      return state;
   }
 };
 
@@ -176,7 +178,9 @@ export const GlobalProvider = ({ children }) => {
         multiDaySelection,
         setMultiDaySelection,
         updateLabel,
-        updateTaskLabel
+        updateTaskLabel,
+        savedVenues: [],
+        dispatchCalVenue: (action) => {},
         
       }}
     >

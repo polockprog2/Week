@@ -39,6 +39,7 @@ function savedVenuesReducer(state, { type, payload }) {
       throw new Error();
   }
 }
+
 function initEvents() {
   const storageEvents = localStorage.getItem("savedEvents");
   const parsedEvents = storageEvents ? JSON.parse(storageEvents) : [];
@@ -71,7 +72,7 @@ export default function ContextWrapper(props) {
   const [multiDaySelection, setMultiDaySelection] = useState([]);
   const [savedEvents, dispatchCalEvent] = useReducer(savedEventsReducer, [], initEvents);
   const [savedTasks, dispatchCalTask] = useReducer(savedTasksReducer, [], initTasks);
-  const [savedVenues, dispatchVenueBooking] = useReducer(savedVenuesReducer, [], initVenues);
+  const [savedVenues, dispatchCalVenue] = useReducer(savedVenuesReducer, [], initVenues);
  
   const filteredEvents = useMemo(() => {
     return savedEvents.filter((evt) =>
@@ -203,8 +204,11 @@ export default function ContextWrapper(props) {
         dispatchCalEvent,
         savedTasks,
         dispatchCalTask,
+        dispatchCalVenue,
+        filteredEvents,
+        filteredTasks,
+        filteredVenues,
         savedVenues,
-        dispatchVenueBooking,
         labels,
         setLabels,
         taskLabels,

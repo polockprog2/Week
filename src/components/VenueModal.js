@@ -14,9 +14,10 @@ export default function VenueModal() {
   const {
     setShowVenueModal,
     daySelected,
-    dispatchVenue,
+    dispatchCalVenue,
     selectedVenue,
     savedVenues,
+    
   } = useContext(GlobalContext);
 
   const [title, setTitle] = useState(selectedVenue ? selectedVenue.title : "");
@@ -97,7 +98,7 @@ export default function VenueModal() {
       endTimestamp: dayjs(`${daySelected.format('YYYY-MM-DD')} ${endTime}`).valueOf(),
     };
 
-    dispatchVenue({ 
+    dispatchCalVenue({ 
       type: selectedVenue ? "update" : "push", 
       payload: venueBooking 
     });
