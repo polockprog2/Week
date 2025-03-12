@@ -64,8 +64,8 @@ export default function WeekView() {
     if (viewMode !== 'week') return;
     if (draggedEvent || resizingEvent) return; // Don't open modal while dragging/resizing
     
-    setSelectedEvent(event);
-    setTimeout(() => setShowEventModal(true), 0);
+    setSelectedEvent(event); // Set the selected event
+    setTimeout(() => setShowEventModal(true), 0); // Open the modal
   }, [setSelectedEvent, setShowEventModal, draggedEvent, resizingEvent, viewMode]);
 
   const getOverlappingEvents = useCallback((event, events) => {
@@ -173,9 +173,10 @@ export default function WeekView() {
       setResizeType(null);
     }
   }, [resizingEvent, dispatchCalEvent]);
+  
 
   return (
-    <div className="flex-1 h-screen overflow-y-auto">
+    <div className="flex-1 h-screen overflow-y-auto" onMouseMove={handleDrag} onMouseUp={handleDragEnd}>
       <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-10">
         <div className="flex items-center space-x-4">
           <button onClick={handlePrevWeek} className="p-2 hover:bg-gray-100 rounded-full">
@@ -196,119 +197,75 @@ export default function WeekView() {
         </button>
       </header>
 
-      <div className="flex border-b sticky top-16 bg-white z-10">
-        <div className="w-20" /> {/* Time gutter */}
+      <div className="flex flex-1 relative z-0">
         {daysOfWeek.map(day => (
-          <div key={day.format("YYYY-MM-DD")} className="flex-1 text-center py-2">
-            <div className="text-sm font-medium">{day.format("ddd")}</div>
-            <div className={`text-2xl font-bold ${
-              day.isSame(dayjs(), 'day') ? 'text-blue-600' : ''
-            }`}>
-              {day.format("D")}
-            </div>
-          </div>
-        ))}
-      </div>
+          <div key={day.format("YYYY-MM-DD")} className="flex-1 relative">
+            {day.isSame(dayjs(), 'day') && (
+              <div 
+                className="absolute w-full border-t-2 border-red-500 z-10"
+                style={{ top: currentTimePosition }}
+              >
+                <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full" />
+              </div>
+            )}
 
-      <div className="flex flex-1">
-        <div className="w-20 border-r sticky left-0 bg-white z-0">
-          {hoursOfDay.map(hour => (
-            <div key={hour} className="h-[50px] text-right pr-2 -mt-3">
-              <span className="text-xs text-gray-500">
-                {dayjs().hour(hour).format("h A")}
-              </span>
-            </div>
-          ))}
-        </div>
+            {hoursOfDay.map(hour => (
+              <div 
+                key={hour}
+                className="h-[50px] border-t border-l border-gray-200 relative group"
+                onClick={() => handleTimeSlotClick(day, hour)}
+              >
+                <div className="absolute w-full h-[1px] top-1/2 bg-gray-100" />
 
-        <div className="flex flex-1 relative z-0">
-          {daysOfWeek.map(day => (
-            <div key={day.format("YYYY-MM-DD")} className="flex-1 relative">
-              {day.isSame(dayjs(), 'day') && (
-                <div 
-                  className="absolute w-full border-t-2 border-red-500 z-10"
-                  style={{ top: currentTimePosition }}
-                >
-                  <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full" />
-                </div>
-              )}
+                {savedEvents
+                  .filter(evt => dayjs(evt.day).isSame(day, 'day') && dayjs(evt.day).hour() === hour)
+                  .map(event => {
+                    const isBeingDragged = draggedEvent?.id === event.id;
+                    const isBeingResized = resizingEvent?.id === event.id;
+                    const eventToRender = isBeingDragged ? draggedEvent : 
+                                        isBeingResized ? resizingEvent : event;
 
-              {hoursOfDay.map(hour => (
-                <div 
-                  key={hour}
-                  className="h-[50px] border-t border-l border-gray-200 relative group"
-                  onClick={() => handleTimeSlotClick(day, hour)}
-                >
-                  <div className="absolute w-full h-[1px] top-1/2 bg-gray-100" />
-
-                  {savedEvents
-                    .filter(evt => dayjs(evt.day).isSame(day, 'day') && dayjs(evt.day).hour() === hour)
-                    .map(event => {
-                      const isBeingDragged = draggedEvent?.id === event.id;
-                      const isBeingResized = resizingEvent?.id === event.id;
-                      const eventToRender = isBeingDragged ? draggedEvent : 
-                                          isBeingResized ? resizingEvent : event;
-
-                      return (
-                        <div
-                          key={event.id}
-                          className={`absolute rounded-lg p-2 text-sm 
-                            bg-${event.label}-100 border border-${event.label}-300 
-                            ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
-                            transition-all cursor-move overflow-hidden`}
-                          style={getEventStyle(eventToRender, day)}
-                          onMouseDown={(e) => handleDragStart(event, e)}
-                          onClick={() => !draggedEvent && !resizingEvent && handleEventClick(event)}
-                        >
-                          <div 
-                            className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                            onMouseDown={(e) => handleResizeStart(event, 'start', e)}
-                          />
-                          <div 
-                            className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                            onMouseDown={(e) => handleResizeStart(event, 'end', e)}
-                          />
-                          <div className="flex items-center space-x-1">
-                            <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold truncate">{event.title}</div>
-                              <div className="text-xs text-gray-600">
-                                {dayjs(event.startTime || event.day).format("h:mm A")} - 
-                                {dayjs(event.endTime || event.day).format("h:mm A")}
-                              </div>
-                              {event.location && (
-                                <div className="text-xs text-gray-500 truncate mt-1">
-                                  📍 {event.location}
-                                </div>
-                              )}
+                    return (
+                      <div
+                        key={event.id}
+                        className={`absolute rounded-lg p-2 text-sm 
+                          bg-${event.label}-100 border border-${event.label}-300 
+                          ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
+                          transition-all cursor-move overflow-hidden`}
+                        style={getEventStyle(eventToRender, day)}
+                        onMouseDown={(e) => handleDragStart(event, e)}
+                        onClick={(e) => !draggedEvent && !resizingEvent && handleEventClick(event, e)}
+                      >
+                        <div 
+                          className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                          onMouseDown={(e) => handleResizeStart(event, 'start', e)}
+                        />
+                        <div 
+                          className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                          onMouseDown={(e) => handleResizeStart(event, 'end', e)}
+                        />
+                        <div className="flex items-center space-x-1">
+                          <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold truncate">{event.title}</div>
+                            <div className="text-xs text-gray-600">
+                              {dayjs(event.startTime || event.day).format("h:mm A")} - 
+                              {dayjs(event.endTime || event.day).format("h:mm A")}
                             </div>
+                            {event.location && (
+                              <div className="text-xs text-gray-500 truncate mt-1">
+                                📍 {event.location}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      );
-                    })}
-
-                  {savedTasks
-                    .filter(task => dayjs(task.dueDate).isSame(day, 'day') && dayjs(task.dueDate).hour() === hour)
-                    .map(task => (
-                      <div
-                        key={task.id}
-                        className={`absolute left-[5px] right-[5px] h-6 rounded-lg p-1 
-                          text-sm bg-${task.label}-50 border border-${task.label}-200 
-                          hover:shadow-md transition-shadow cursor-pointer`}
-                        style={{
-                          top: `${(dayjs(task.dueDate).minute() / 60) * 50}px`,
-                          zIndex: 25
-                        }}
-                        onClick={() => handleTaskClick(task)}
-                      >
-                        <div className="font-semibold truncate">{task.title}</div>
                       </div>
-                    ))}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+                    );
+                  })}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );
