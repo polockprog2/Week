@@ -5,6 +5,11 @@ const labelsClasses = [
   "blue",
   "red",
   "purple",
+  "yellow",
+  "pink",
+  "orange",
+  "teal",
+  "cyan",
 ];
 
 module.exports = {
@@ -13,9 +18,12 @@ module.exports = {
     //Because we made a dynamic class with the label we need to add those clases
     // to the safe list so the purge does not remove that
     safelist: [
-      ...labelsClasses.map((lbl) => `bg-${lbl}-500`),
       ...labelsClasses.map((lbl) => `bg-${lbl}-200`),
-      ...labelsClasses.map((lbl) => `text-${lbl}-400`)
+      ...labelsClasses.map((lbl) => `bg-${lbl}-300`),
+   
+      ...labelsClasses.map((lbl) => `bg-${lbl}-500`),
+      ...labelsClasses.map((lbl) => `bg-${lbl}-600`),
+      
     ],
   },
   darkMode: false, // or 'media' or 'class'

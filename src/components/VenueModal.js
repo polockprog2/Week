@@ -16,6 +16,7 @@ export default function VenueModal() {
     daySelected,
     dispatchVenue,
     selectedVenue,
+    savedVenues,
   } = useContext(GlobalContext);
 
   const [title, setTitle] = useState(selectedVenue ? selectedVenue.title : "");
@@ -24,6 +25,35 @@ export default function VenueModal() {
   const [description, setDescription] = useState(selectedVenue ? selectedVenue.description : "");
   const [attendees, setAttendees] = useState(selectedVenue ? selectedVenue.attendees : "");
   const [selectedVenueId, setSelectedVenueId] = useState(selectedVenue ? selectedVenue.venueId : "");
+
+  // Check for overlapping bookings
+  const isTimeSlotAvailable = () => {
+    const newStart = dayjs(`${daySelected.format('YYYY-MM-DD')} ${startTime}`);
+    const newEnd = dayjs(`${daySelected.format('YYYY-MM-DD')} ${endTime}`);
+
+    if (newStart.isAfter(newEnd)) {
+      alert("End time must be after start time.");
+      return false;
+    }
+
+    const overlapping = savedVenues.some(booking => {
+      if (booking.venueId !== selectedVenueId) return false;
+      const existingStart = dayjs(booking.startTime);
+      const existingEnd = dayjs(booking.endTime);
+      return (
+        (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
+        (newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
+        (newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd))
+      );
+    });
+
+    if (overlapping) {
+      alert("This time slot is already booked for the selected venue.");
+      return false;
+    }
+
+    return true;
+  };
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -42,6 +72,8 @@ export default function VenueModal() {
       alert("Please select a venue");
       return;
     }
+
+    if (!isTimeSlotAvailable()) return;
 
     const venue = venues.find(v => v.id === parseInt(selectedVenueId));
     if (attendees > venue.capacity) {

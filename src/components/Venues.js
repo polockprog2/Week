@@ -15,13 +15,12 @@ export default function Venues() {
   const { 
     savedVenues, 
     daySelected, 
-    setShowVenueModal, // Changed this from setShowEventModal
+    setShowVenueModal,
     setSelectedVenue,
     showVenueModal,
-
   } = useContext(GlobalContext);
 
-  // Only get events that are specifically assigned to venues
+  // Get bookings for a specific venue on the selected day
   const getVenueBookings = (venueId) => {
     return savedVenues.filter(booking => 
       booking.venueId === venueId.toString() && 
@@ -29,7 +28,19 @@ export default function Venues() {
     );
   };
 
-   const handleBookVenue = (venue) => {
+  // Check if a venue is available at the current time
+  const isVenueAvailable = (bookings) => {
+    if (bookings.length === 0) return true;
+    const currentTime = dayjs();
+    return !bookings.some(booking => {
+      const startTime = dayjs(booking.startTime);
+      const endTime = dayjs(booking.endTime);
+      return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
+    });
+  };
+
+  // Handle booking a venue
+  const handleBookVenue = (venue) => {
     setSelectedVenue({
       title: '',
       day: daySelected.valueOf(),
@@ -40,16 +51,6 @@ export default function Venues() {
       type: 'venue-booking'
     });
     setShowVenueModal(true);
-  };
-
-  const isVenueAvailable = (bookings) => {
-    if (bookings.length === 0) return true;
-    const currentTime = dayjs();
-    return !bookings.some(booking => {
-      const startTime = dayjs(booking.startTime);
-      const endTime = dayjs(booking.endTime);
-      return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
-    });
   };
 
   return (
@@ -113,8 +114,7 @@ export default function Venues() {
           })}
         </div>
       </div>
+      {showVenueModal && <VenueModal />}
     </div>
-    
   );
-  {showVenueModal && <VenueModal />}
 }

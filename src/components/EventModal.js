@@ -9,6 +9,12 @@ const labelsClasses = [
   "blue",
   "red",
   "indigo",
+  "purple",
+  "yellow",
+  "pink",
+  "orange",
+  "teal",
+  "cyan",
   
 ];
 
@@ -47,7 +53,7 @@ export default function EventModal() {
     selectedEvent
       ? labelsClasses.find((lbl) => lbl === selectedEvent.label)
       : selectedTask
-      ? labelsClasses.find((lbl) => lbl === selectedTask.label)
+      ? labelsClasses.find((lbl) => lbl === selectedTask.label)//might need to fix this part/line
       : labelsClasses[0]
   );
   const [reminder, setReminder] = useState(
