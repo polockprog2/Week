@@ -282,7 +282,7 @@ export default function DayView() {
             return (
               <div
                 key={event.id}
-                className={`absolute rounded-lg p-2 text-sm 
+                className={`absolute rounded-lg p-2 text-sm text-white 
                   bg-${event.label}-500 border border-${event.label}-500 
                   ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
                   transition-all cursor-move overflow-hidden`}

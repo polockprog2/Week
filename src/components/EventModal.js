@@ -13,14 +13,6 @@ const labelsClasses = [
   "blue",
 ];
 
-const venues = [
-  { id: 1, name: 'Conference Room A', capacity: 20 },
-  { id: 2, name: 'Meeting Room 1', capacity: 10 },
-  { id: 3, name: 'Board Room', capacity: 15 },
-  { id: 4, name: 'Training Room', capacity: 30 },
-  { id: 5, name: 'Auditorium', capacity: 100 },
-];
-
 
 export default function EventModal() {
   const {
@@ -60,9 +52,7 @@ export default function EventModal() {
   const [endTime, setEndTime] = useState(
     selectedEvent ? selectedEvent.endTime : ""
   );
-  const [selectedVenue, setSelectedVenue] = useState(
-    selectedEvent ? selectedEvent.venue : ""
-  );
+
   const [guests, setGuests] = useState(
     selectedEvent ? selectedEvent.guests : []
   );
@@ -77,7 +67,7 @@ export default function EventModal() {
       setReminder(selectedEvent ? selectedEvent.reminder : "");
       setStartTime(selectedEvent ? selectedEvent.startTime : "");
       setEndTime(selectedEvent ? selectedEvent.endTime : "");
-      setSelectedVenue(selectedEvent ? selectedEvent.venue : "");
+      
     }
   }, [selectedEvent, selectedTask]);
 
@@ -94,12 +84,7 @@ export default function EventModal() {
       alert("Please select start and end times");
       return;
     }
-
-    if (!selectedVenue) {
-      alert("Please select a venue");
-      return;
-    }
-
+    
     const calendarEvent = {
       title: title.trim(),
       description,
@@ -111,7 +96,6 @@ export default function EventModal() {
       reminder,
       startTime,
       endTime,
-      venue: selectedVenue,
       startTimestamp: dayjs(`${daySelected.format('YYYY-MM-DD')} ${startTime}`).valueOf(),
       endTimestamp: dayjs(`${daySelected.format('YYYY-MM-DD')} ${endTime}`).valueOf(),
     };
@@ -210,22 +194,7 @@ export default function EventModal() {
               />
             </div>
 
-            <span className="material-icons-outlined text-blue-400">
-              Venues
-            </span>
-            <select
-              value={selectedVenue}
-              onChange={(e) => setSelectedVenue(e.target.value)}
-              required
-              className="pt-3 border-0 text-gray-600 pb-2 w-full border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
-            >
-              <option value="">Select Venue</option>
-              {venues.map(venue => (
-                <option key={venue.id} value={venue.id}>
-                  {venue.name}
-                </option>
-              ))}
-            </select>
+          
             
             <span className="material-icons-outlined text-blue-400">
               segment
