@@ -9,9 +9,8 @@ export default function WeekView() {
     setShowEventModal, 
     setDaySelected,
     setSelectedEvent,
+    setSelectedTask,
     dispatchCalEvent,
-    dispatchCalTask,
-    handleTaskClick,
     viewMode,
   } = useContext(GlobalContext);
   
@@ -67,6 +66,14 @@ export default function WeekView() {
     setSelectedEvent(event); // Set the selected event
     setTimeout(() => setShowEventModal(true), 0); // Open the modal
   }, [setSelectedEvent, setShowEventModal, draggedEvent, resizingEvent, viewMode]);
+
+  const handleTaskClick = useCallback((task, e) => {
+    e?.stopPropagation(); // Prevent time slot click
+    if (viewMode !== 'week') return;
+    
+    setSelectedTask(task); // Set the selected task
+    setTimeout(() => setShowEventModal(true), 0); // Open the modal
+  }, [setSelectedTask, setShowEventModal, viewMode]);
 
   const getOverlappingEvents = useCallback((event, events) => {
     return events.filter(evt => {
@@ -173,7 +180,7 @@ export default function WeekView() {
       setResizeType(null);
     }
   }, [resizingEvent, dispatchCalEvent]);
-  
+
   return (
     <div className="flex-1 h-screen overflow-y-auto" onMouseMove={handleDrag} onMouseUp={handleDragEnd}>
       <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-10">
@@ -210,7 +217,6 @@ export default function WeekView() {
         ))}
       </div>
       <div className="flex flex-1 relative z-0">
-  
         {daysOfWeek.map(day => (
           <div key={day.format("YYYY-MM-DD")} className="flex-1 relative">
             {day.isSame(dayjs(), 'day') && (
@@ -229,6 +235,7 @@ export default function WeekView() {
               >
                 <div className="absolute w-full h-[1px] top-1/2 bg-gray-100" />
 
+                {/* Render Events */}
                 {savedEvents
                   .filter(evt => dayjs(evt.day).isSame(day, 'day') && dayjs(evt.day).hour() === hour)
                   .map(event => {
@@ -259,7 +266,7 @@ export default function WeekView() {
                         <div className="flex items-center space-x-1">
                           <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text=xs text-white truncate">{event.title}</div>
+                            <div className="font-semibold text-xs text-white truncate">{event.title}</div>
                             <div className="text-xs text-white font-bold">
                               {dayjs(event.startTime || event.day).format("h:mm A")} - 
                               {dayjs(event.endTime || event.day).format("h:mm A")}
@@ -274,6 +281,25 @@ export default function WeekView() {
                       </div>
                     );
                   })}
+
+                {/* Render Tasks */}
+                {savedTasks
+                  .filter(task => dayjs(task.dueDate).isSame(day, 'day') && dayjs(task.dueDate).hour() === hour)
+                  .map(task => (
+                    <div
+                      key={task.id}
+                      className={`absolute left-[5px] right-[5px] h-6 rounded-lg p-1 
+                        text-sm bg-${task.label}-100 border border-${task.label}-200 
+                        hover:shadow-md transition-shadow cursor-pointer`}
+                      style={{
+                        top: `${(dayjs(task.dueDate).minute() / 60) * 50}px`,
+                        zIndex: 25
+                      }}
+                      onClick={(e) => handleTaskClick(task, e)}
+                    >
+                      <div className="font-semibold truncate">{task.title}</div>
+                    </div>
+                  ))}
               </div>
             ))}
           </div>
