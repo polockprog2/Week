@@ -7,26 +7,22 @@ const labelsClasses = [
   "purple",
   "yellow",
   "pink",
-  "orange",
-  "teal",
-  "cyan",
+ 
 ];
 
 module.exports = {
-  purge: {
-    content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
-    //Because we made a dynamic class with the label we need to add those clases
-    // to the safe list so the purge does not remove that
-    safelist: [
-      ...labelsClasses.map((lbl) => `bg-${lbl}-200`),
-      ...labelsClasses.map((lbl) => `bg-${lbl}-300`),
-   
-      ...labelsClasses.map((lbl) => `bg-${lbl}-500`),
-      ...labelsClasses.map((lbl) => `bg-${lbl}-600`),
-      
-    ],
-  },
-  darkMode: false, // or 'media' or 'class'
+  content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
+  safelist: [
+    ...labelsClasses.map((lbl) => `bg-${lbl}-200`),
+    ...labelsClasses.map((lbl) => `bg-${lbl}-600`),
+    ...labelsClasses.map((lbl) => `bg-${lbl}-900`),
+    ...labelsClasses.map((lbl) => `border-${lbl}-300`),
+    ...labelsClasses.map((lbl) => `border-${lbl}-400`),
+    ...labelsClasses.map((lbl) => `text-${lbl}-600`),
+    ...labelsClasses.map((lbl) => `text-${lbl}-900`),
+    ...labelsClasses.map((lbl) => `hover:bg-${lbl}-600`),
+  ],
+  darkMode: false,
   theme: {
     extend: {
       fontFamily: {
@@ -34,11 +30,21 @@ module.exports = {
       },
       gridTemplateColumns: {
         "1/5": "1fr 5fr"
+      },
+      height: {
+        "1/2": "50%"
+      },
+      zIndex: {
+        '100': '100',
       }
     },
   },
   variants: {
-    extend: {},
+    extend: {
+      backgroundColor: ['hover', 'active'],
+      borderColor: ['focus', 'hover'],
+      opacity: ['disabled'],
+    },
   },
   plugins: [require("@tailwindcss/forms")],
 }

@@ -6,19 +6,11 @@ const statusClasses = ["todo", "in-progress", "done"];
 
 const labelsClasses = [
   
-  "orange",
-  "cyan",
-  "lime",
-  "pink",
-  "purple",
-  "amber",
-  "navy",
-  "maroon",
-  "olive",
-  "coral",
-  "salmon",
-  "turquoise",
- 
+  "pruple",
+  "indigo",
+  "blue", 
+  "green",
+  "yellow",
 ];
 
 export default function TaskModal() {
@@ -183,7 +175,7 @@ export default function TaskModal() {
                 <span
                   key={i}
                   onClick={() => setSelectedLabel(lblClass)}
-                  className={`bg-${lblClass}-500 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer`}
+                  className={`bg-${lblClass}-600 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer`}
                 >
                   {selectedLabel === lblClass && (
                     <span className="material-icons-outlined text-white text-sm">

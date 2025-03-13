@@ -4,18 +4,13 @@ import dayjs from "dayjs";
 
 
 const labelsClasses = [
-  "gray",
-  "green",
-  "blue",
-  "red",
   "indigo",
-  "purple",
+  "red",
+  "green",
   "yellow",
   "pink",
-  "orange",
-  "teal",
-  "cyan",
-  
+  "purple",
+  "blue",
 ];
 
 const venues = [
@@ -67,6 +62,9 @@ export default function EventModal() {
   );
   const [selectedVenue, setSelectedVenue] = useState(
     selectedEvent ? selectedEvent.venue : ""
+  );
+  const [guests, setGuests] = useState(
+    selectedEvent ? selectedEvent.guests : []
   );
 
   useEffect(() => {
@@ -134,6 +132,13 @@ export default function EventModal() {
         payload: selectedEvent,
       });
       setShowEventModal(false);
+    }
+  }
+  function handleAddGuest(e) {
+    e.preventDefault();
+    if (email.trim() && !guests.includes(email.trim())) {
+      setGuests([...guests, email.trim()]);
+      setEmail("");
     }
   }
 
@@ -257,6 +262,7 @@ export default function EventModal() {
               className="pt-3 border-0 text-gray-600 pb-2 w-full border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
               onChange={(e) => setEmail(e.target.value)}
             />
+          
 
             <span className="material-icons-outlined text-blue-400">
               notifications
@@ -282,7 +288,7 @@ export default function EventModal() {
                 <span
                   key={i}
                   onClick={() => setSelectedLabel(lblClass)}
-                  className={`bg-${lblClass}-500 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer`}
+                  className={`bg-${lblClass}-600 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer`}
                 >
                   {selectedLabel === lblClass && (
                     <span className="material-icons-outlined text-white text-sm">

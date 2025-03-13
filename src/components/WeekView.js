@@ -174,7 +174,6 @@ export default function WeekView() {
     }
   }, [resizingEvent, dispatchCalEvent]);
   
-
   return (
     <div className="flex-1 h-screen overflow-y-auto" onMouseMove={handleDrag} onMouseUp={handleDragEnd}>
       <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-10">
@@ -196,8 +195,22 @@ export default function WeekView() {
           Today
         </button>
       </header>
-
+      {/* Week days header */}
+      <div className="flex border-b sticky top-16 bg-white z-10">
+        <div className="w-20" /> {/* Time gutter */}
+        {daysOfWeek.map(day => (
+          <div key={day.format("YYYY-MM-DD")} className="flex-1 text-center py-2">
+            <div className="text-sm font-medium">{day.format("ddd")}</div>
+            <div className={`text-2xl font-bold ${
+              day.isSame(dayjs(), 'day') ? 'text-blue-600' : ''
+            }`}>
+              {day.format("D")}
+            </div>
+          </div>
+        ))}
+      </div>
       <div className="flex flex-1 relative z-0">
+  
         {daysOfWeek.map(day => (
           <div key={day.format("YYYY-MM-DD")} className="flex-1 relative">
             {day.isSame(dayjs(), 'day') && (
@@ -208,7 +221,6 @@ export default function WeekView() {
                 <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full" />
               </div>
             )}
-
             {hoursOfDay.map(hour => (
               <div 
                 key={hour}

@@ -218,7 +218,7 @@ export default function DayView() {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative z=0">
         {/* Time labels */}
         <div className="w-20 border-r bg-white sticky left-0 z-20">
           {hoursOfDay.map(hour => (
@@ -232,7 +232,7 @@ export default function DayView() {
 
         {/* Time grid */}
         <div 
-          className="flex-1 relative bg-gray-50"
+          className="flex-1 relative bg-gray-50 "
           onMouseMove={(e) => {
             handleDrag(e);
             handleResize(e);
