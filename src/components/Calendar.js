@@ -11,6 +11,7 @@ export default function Day({ day, rowIdx }) {
     setShowEventModal,
     filteredEvents,
     setSelectedEvent,
+    setSelectedTask,
     multiDaySelection,
     setMultiDaySelection,
   } = useContext(GlobalContext);
@@ -41,6 +42,10 @@ export default function Day({ day, rowIdx }) {
   function handleEventClick(event) {
     setSelectedEvent(event);
     setShowEventModal(true);
+  }
+  function handleEventClick(task) {
+    setSelectedTask(task);
+    setShowTaskModal(true);
   }
 
   function handleDayMouseDown() {
@@ -89,6 +94,7 @@ export default function Day({ day, rowIdx }) {
       <div className="flex-1 cursor-pointer">
         {dayEvents.map((evt, idx) => (
           <CalendarEvent key={idx} event={evt} />
+      
         ))}
       </div>
     </div>

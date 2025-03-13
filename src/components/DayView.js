@@ -12,7 +12,7 @@ export default function DayView() {
     setSelectedEvent,
     dispatchCalEvent,
     viewMode,
-   // setShowTaskModal,
+    setShowTaskModal,
   } = useContext(GlobalContext);
   
   const [currentTime, setCurrentTime] = useState(dayjs());
@@ -283,7 +283,7 @@ export default function DayView() {
               <div
                 key={event.id}
                 className={`absolute rounded-lg p-2 text-sm 
-                  bg-${event.label}-100 border border-${event.label}-300 
+                  bg-${event.label}-500 border border-${event.label}-500 
                   ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
                   transition-all cursor-move overflow-hidden`}
                 style={getEventStyle(eventToRender)}
@@ -303,13 +303,13 @@ export default function DayView() {
                 <div className="flex items-center space-x-1">
                   <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">{event.title}</div>
-                    <div className="text-xs text-gray-600">
+                    <div className="font-semibold text-white truncate">{event.title}</div>
+                    <div className="font-semibold text-xs text-white-900">
                       {dayjs(event.startTime || event.day).format("h:mm A")} - 
                       {dayjs(event.endTime || event.day).format("h:mm A")}
                     </div>
                     {event.location && (
-                      <div className="text-xs text-gray-500 truncate mt-1">
+                      <div className="font-semibold text-xs text-white-600 truncate mt-1">
                         📍 {event.location}
                       </div>
                     )}
@@ -323,15 +323,15 @@ export default function DayView() {
           {dayTasks.map(task => (
             <div
               key={task.id}
-              className={`absolute left-[5px] right-[5px] h-6 rounded-lg p-1 
-                text-sm bg-${task.label}-50 border border-${task.label}-200 
+              className={`absolute left-[10px] right-[5px] h-6 rounded-lg p-1 
+                text-lg bg-${task.label}-600 border border-${task.label}-600 
                 hover:shadow-md transition-shadow cursor-pointer`}
               style={{
                 top: getTimePosition(dayjs(task.dueDate)),
                 zIndex: 25
               }}
             >
-              <div className="font-semibold truncate">{task.title}</div>
+              <div className="font-semibold  text-xs text-white truncate">{task.title}</div>
             </div>
           ))}
         </div>

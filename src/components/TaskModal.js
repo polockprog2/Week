@@ -3,15 +3,7 @@ import GlobalContext from "../context/GlobalContext";
 
 const priorityClasses = ["low", "medium", "high"];
 const statusClasses = ["todo", "in-progress", "done"];
-
-const labelsClasses = [
-  
-  "pruple",
-  "indigo",
-  "blue", 
-  "green",
-  "yellow",
-];
+const labelsClasses = ["purple", "indigo", "blue", "green", "yellow","red","pink","gray"];  
 
 export default function TaskModal() {
   const {
@@ -19,7 +11,7 @@ export default function TaskModal() {
     daySelected,
     dispatchCalTask,
     selectedTask,
-    setSelectedTask, // Use setSelectedTask
+    setSelectedTask,
     showTaskModal,
   } = useContext(GlobalContext);
 
@@ -50,8 +42,9 @@ export default function TaskModal() {
       dueDate,
       priority,
       status,
-      label: selectedLabel, // Add label to task
+      label: selectedLabel,
       id: selectedTask ? selectedTask.id : Date.now(),
+      day: daySelected.format("YYYY-MM-DD"), // Ensure the task has a day property
     };
     if (selectedTask) {
       dispatchCalTask({ type: "update", payload: task });
@@ -59,7 +52,7 @@ export default function TaskModal() {
       dispatchCalTask({ type: "push", payload: task });
     }
     setShowTaskModal(false);
-    setSelectedTask(null); // Reset selectedTask
+    setSelectedTask(null);
   }
 
   function handleDelete() {
@@ -69,7 +62,7 @@ export default function TaskModal() {
         payload: selectedTask,
       });
       setShowTaskModal(false);
-      setSelectedTask(null); // Reset selectedTask
+      setSelectedTask(null);
     }
   }
 

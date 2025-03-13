@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import GlobalContext from "../context/GlobalContext";
 
 export default function CalendarEvent({ event }) {
-  const { setSelectedEvent, setShowEventModal } = useContext(GlobalContext);
+  const { setSelectedEvent, setSelectedTask,setShowEventModal } = useContext(GlobalContext);
 
   function handleDragStart(e) {
     e.dataTransfer.setData("text/plain", JSON.stringify(event));
@@ -11,6 +11,7 @@ export default function CalendarEvent({ event }) {
 
   function handleClick() {
     setSelectedEvent(event);
+    setSelectedTask(task);
     setShowEventModal(true);
   }
 
@@ -27,5 +28,6 @@ export default function CalendarEvent({ event }) {
       <span className="font-bold">{event.title}</span>
       <span className="text-white/90">{event.startTime} - {event.endTime}</span>
     </div>
+    
   );
 }
