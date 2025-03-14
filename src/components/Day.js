@@ -2,7 +2,6 @@ import dayjs from "dayjs";
 import React, { useContext, useState, useEffect } from "react";
 import GlobalContext from "../context/GlobalContext";
 
-
 export default function Day({ day, rowIdx, events, tasks }) {
   const [dayEvents, setDayEvents] = useState([]);
   const [dayTasks, setDayTasks] = useState([]);
@@ -34,12 +33,14 @@ export default function Day({ day, rowIdx, events, tasks }) {
     setShowEventModal(true);
   }
 
-  function handleEventClick(event) {
+  function handleEventClick(event, e) {
+    e.stopPropagation(); // Prevent day click
     setSelectedEvent(event);
     setShowEventModal(true);
   }
 
-  function handleTaskClick(task) {
+  function handleTaskClick(task, e) {
+    e.stopPropagation(); // Prevent day click
     setSelectedTask(task);
     setShowTaskModal(true);
   }
@@ -89,7 +90,7 @@ export default function Day({ day, rowIdx, events, tasks }) {
       onMouseEnter={handleMouseEnter}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
-      onClick={handleDayClick} // Add this line to handle day click
+      onClick={handleDayClick}
     >
       <header className="flex flex-col items-center">
         {rowIdx === 0 && (
@@ -108,7 +109,7 @@ export default function Day({ day, rowIdx, events, tasks }) {
           <div
             key={idx}
             className={`bg-${evt.label}-500 p-1 mr-3 text-white font-bold text-sm rounded mb-1 truncate`}
-            onClick={() => handleEventClick(evt)}
+            onClick={(e) => handleEventClick(evt, e)}
             draggable
             onDragStart={(e) => {
               e.dataTransfer.setData("text/plain", JSON.stringify({ ...evt, type: "event" }));
@@ -121,7 +122,7 @@ export default function Day({ day, rowIdx, events, tasks }) {
           <div
             key={idx}
             className={`bg-${task.label}-500 p-1 mr-3 text-white font-bold text-sm rounded mb-1 truncate`}
-            onClick={() => handleTaskClick(task)}
+            onClick={(e) => handleTaskClick(task, e)}
             draggable
             onDragStart={(e) => {
               e.dataTransfer.setData("text/plain", JSON.stringify({ ...task, type: "task" }));
