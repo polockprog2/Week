@@ -300,16 +300,16 @@ export default function DayView() {
                   onMouseDown={(e) => handleResizeStart(event, 'end', e)}
                 />
                 
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-1 text-white ">
                   <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-white truncate">{event.title}</div>
+                    <div className="font-semibold text-white text-lg h-6 truncate">{event.title}</div>
                     <div className="font-semibold text-xs text-white-900">
                       {dayjs(event.startTime || event.day).format("h:mm A")} - 
                       {dayjs(event.endTime || event.day).format("h:mm A")}
                     </div>
                     {event.location && (
-                      <div className="font-semibold text-xs text-white-600 truncate mt-1">
+                      <div className="font-semibold text-lg text-white-600 truncate mt-1">
                         📍 {event.location}
                       </div>
                     )}
@@ -323,7 +323,7 @@ export default function DayView() {
           {dayTasks.map(task => (
             <div
               key={task.id}
-              className={`absolute left-[5px] right-[5px] h-9 rounded-lg p-6 text-white
+              className={`absolute left-[5px] right-[5px] text-lg rounded-lg p-6 text-white
                 text-sm bg-${task.label}-600 border border-${task.label}-600 
                 hover:shadow-md transition-shadow cursor-pointer`}
               style={{
