@@ -6,11 +6,9 @@ import dayjs from "dayjs";
 const labelsClasses = [
   "indigo",
   "red",
-  "green",
-  "yellow",
-  "pink",
-  "purple",
   "blue",
+  "teal",
+  "cyan",
 ];
 
 

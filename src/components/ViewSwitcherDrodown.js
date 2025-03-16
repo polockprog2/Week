@@ -25,7 +25,7 @@ export default function ViewSwitcherDropdown() {
     <div className="relative inline-block text-left">
       <button
         type="button"
-        className="border rounded-lg px-4 py-2 flex items-center space-x-2 bg-white hover:bg-gray-50"
+        className="border rounded-lg px-4 py-2 flex items-center space-x-2 bg-white shadow-md hover:shadow-2xl"
         onClick={toggleDropdown}
       >
         <span className="text-gray-700">{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} View</span>

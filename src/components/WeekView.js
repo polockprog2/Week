@@ -82,7 +82,7 @@ export default function WeekView() {
     if (viewMode !== 'week') return;
     
     setSelectedTask(task); // Set the selected task
-    setTimeout(() => setShowEventModal(true), 0); // Open the modal
+    setTimeout(() => setShowTaskModal(true), 1); // Open the modal
   }, [setSelectedTask, setShowEventModal, viewMode]);
 
   const getOverlappingEvents = useCallback((event, events) => {
@@ -369,8 +369,8 @@ export default function WeekView() {
                     return (
                       <div
                         key={task.id}
-                        className={`absolute left-[5px] right-[5px] h-6 rounded-lg p-1 
-                          text-sm bg-${task.label}-100 border border-${task.label}-200 
+                        className={`absolute left-[5px] right-[5px] h-9 rounded-lg p-2 text-white 
+                          text-sm bg-${task.label}-600 border border-${task.label}-200 
                           ${isDragging ? 'shadow-lg opacity-90 z-30' : 'hover:shadow-md z-25'}
                           transition-all cursor-move`}
                         style={getTaskStyle(taskToRender, day)}
@@ -380,7 +380,7 @@ export default function WeekView() {
                         <div className="font-semibold truncate">
                           <span className="mr-1">⚑</span>
                           {task.title}
-                          <span className="ml-2 text-xs text-gray-600">
+                          <span className="ml-2 text-white text-xs text-gray-600">
                             {dayjs(taskToRender.dueDate).format("h:mm A")}
                           </span>
                         </div>

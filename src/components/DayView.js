@@ -218,7 +218,7 @@ export default function DayView() {
         </div>
       </header>
 
-      <div className="flex flex-1 relative z=0">
+      <div className="flex flex-1 relative z-0">
         {/* Time labels */}
         <div className="w-20 border-r bg-white sticky left-0 z-20">
           {hoursOfDay.map(hour => (
@@ -255,7 +255,7 @@ export default function DayView() {
                   onClick={() => handleTimeSlotClick(hour, quarter)}
                   className={`absolute w-full border-t ${
                     quarter === 0 ? 'border-gray-200' : 'border-gray-100'
-                  } hover:bg-blue-50/30 cursor-pointer transition-colors`}
+                  } hover:bg-blue-70/30 text-lg text-white cursor-pointer transition-colors`}
                   style={{ top: `${quarter}px` }}
                 />
               ))}
@@ -323,15 +323,15 @@ export default function DayView() {
           {dayTasks.map(task => (
             <div
               key={task.id}
-              className={`absolute left-[10px] right-[5px] h-6 rounded-lg p-1 
-                text-lg bg-${task.label}-600 border border-${task.label}-600 
+              className={`absolute left-[5px] right-[5px] h-9 rounded-lg p-6 text-white
+                text-sm bg-${task.label}-600 border border-${task.label}-600 
                 hover:shadow-md transition-shadow cursor-pointer`}
               style={{
                 top: getTimePosition(dayjs(task.dueDate)),
                 zIndex: 25
               }}
             >
-              <div className="font-semibold  text-xs text-white truncate">{task.title}</div>
+              <div className="font-semibold  text-lg text-white truncate">{task.title}</div>
             </div>
           ))}
         </div>
