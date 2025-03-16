@@ -49,3 +49,5 @@ src/
   index.js
   reportWebVitals.js
   setupTests.js
+
+??need to fix day view task issue where task click doesnt work.
