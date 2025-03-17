@@ -32,19 +32,7 @@ export default function Day({ day, rowIdx, events, tasks }) {
       : "";
   }
 
-  function getEventClass(event) {
-    const colorMap = {
-      indigo: 'bg-indigo-600',
-      red: 'bg-red-600',
-      green: 'bg-green-600',
-      yellow: 'bg-yellow-600',
-      pink: 'bg-pink-600',
-      purple: 'bg-purple-600',
-      blue: 'bg-blue-600'
-    };
-    return `p-1 text-white font-bold text-sm truncate ${colorMap[event.label] || 'bg-blue-600'} mx-1 rounded-md`;
-  }
-
+ 
   function handleDayClick() {
     setDaySelected(day);
     setShowEventModal(true);
@@ -99,10 +87,11 @@ export default function Day({ day, rowIdx, events, tasks }) {
       </header>
       <div className="flex-1 cursor-pointer">
         <div>
+          {/*Event*/}
           {dayEvents.map((evt, idx) => (
             <div
               key={evt.id}
-              className={getEventClass(evt)}
+              className={`bg-${evt.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
               onClick={(e) => handleEventClick(evt, e)}
               draggable
               onDragStart={(e) => {

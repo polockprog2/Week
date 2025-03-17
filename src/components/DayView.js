@@ -76,7 +76,6 @@ export default function DayView() {
   const hoursOfDay = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);
   const quarterHours = useMemo(() => [0, 15, 30, 45], []);
   
-
   // Calculate overlapping events
   const getOverlappingEvents = useCallback((event, events) => {
     return events.filter(evt => {
@@ -198,7 +197,7 @@ export default function DayView() {
   return (
     <div className="flex-1 h-screen overflow-y-auto">
       <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-10">
-      <div className="flex items-center space-x-5 ml-12">
+        <div className="flex items-center space-x-5 ml-12">
           <button 
             onClick={() => setDaySelected(daySelected.subtract(1, "day"))}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -214,7 +213,6 @@ export default function DayView() {
           <h2 className="text-xl font-semibold">
             {daySelected.format("dddd, MMMM D, YYYY")}
           </h2>
-          
         </div>
       </header>
 
@@ -223,7 +221,7 @@ export default function DayView() {
         <div className="w-20 border-r bg-white sticky left-0 z-20">
           {hoursOfDay.map(hour => (
             <div key={hour} className="h-[60px] border-t border-gray-200">
-              <div className="text-xs text-gray-500 text-right pr-2 -mt-2.5">
+              <div className="text-xs text-gray-500 text-right pr-2 -mt-2.6">
                 {dayjs().hour(hour).format("h A")}
               </div>
             </div>
@@ -232,7 +230,7 @@ export default function DayView() {
 
         {/* Time grid */}
         <div 
-          className="flex-1 relative bg-gray-50 "
+          className="flex-1 relative bg-gray-50"
           onMouseMove={(e) => {
             handleDrag(e);
             handleResize(e);
@@ -300,7 +298,7 @@ export default function DayView() {
                   onMouseDown={(e) => handleResizeStart(event, 'end', e)}
                 />
                 
-                <div className="flex items-center space-x-1 text-white ">
+                <div className="flex items-center space-x-1 text-white">
                   <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-white text-lg h-6 truncate">{event.title}</div>
@@ -320,20 +318,29 @@ export default function DayView() {
           })}
 
           {/* Tasks */}
-          {dayTasks.map(task => (
-            <div
-              key={task.id}
-              className={`absolute left-[5px] right-[5px] text-lg rounded-lg p-6 text-white
-                text-sm bg-${task.label}-600 border border-${task.label}-600 
-                hover:shadow-md transition-shadow cursor-pointer`}
-              style={{
-                top: getTimePosition(dayjs(task.dueDate)),
-                zIndex: 25
-              }}
-            >
-              <div className="font-semibold  text-lg text-white truncate">{task.title}</div>
-            </div>
-          ))}
+          {dayTasks.map(task => {
+            const isBeingDragged = draggedEvent?.id === task.id;
+            const isBeingResized = resizingEvent?.id === task.id;
+            const taskToRender = isBeingDragged ? draggedEvent : 
+                                isBeingResized ? resizingEvent : task;
+
+            return (
+              <div
+                key={task.id}
+                className={`absolute left-[2px] right-[2px] absolute rounded-lg p-2 text-sm text-white 
+                  bg-${task.label}-500 border border-${task.label}-500 
+                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
+                  transition-all cursor-move overflow-hidden`}
+                style={{
+                  top: getTimePosition(dayjs(task.dueDate)),
+                  zIndex: 25
+                }}
+                onClick={() => handleEventClick(task)}
+              >
+                <div className="font-semibold text-lg text-white truncate">{task.title}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

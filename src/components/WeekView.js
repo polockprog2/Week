@@ -15,6 +15,7 @@ export default function WeekView() {
     setSelectedEvent,
     setSelectedTask,
     dispatchCalEvent,
+    dispatchCalTask,
     viewMode,
     showEventModal,
     showTaskModal,
@@ -25,9 +26,9 @@ export default function WeekView() {
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [startOfWeek, setStartOfWeek] = useState(dayjs().startOf("week"));
   const [draggedItem, setDraggedItem] = useState(null);
-  const [draggedItemType, setDraggedItemType] = useState(null); // 'event' or 'task'
+  const [draggedItemType, setDraggedItemType] = useState(null); 
   const [resizingItem, setResizingItem] = useState(null);
-  const [resizingItemType, setResizingItemType] = useState(null); // 'event' or 'task'
+  const [resizingItemType, setResizingItemType] = useState(null); 
   const [resizeType, setResizeType] = useState(null);
   const [dragOffset, setDragOffset] = useState(0);
 
@@ -177,15 +178,17 @@ export default function WeekView() {
   const handleDragEnd = useCallback(() => {
     if (draggedItem) {
       dispatchCalEvent({ 
-        type: 'update', 
+        type: "update", 
         payload: draggedItem,
         itemType: draggedItemType 
       });
-      setDraggedItem(null);
-      setDraggedItemType(null);
-      setDragOffset(0);
     }
-  }, [draggedItem, draggedItemType, dispatchCalEvent]);
+    setDraggedItem(null);
+    setDraggedItemType(null);
+    setDragOffset(0);
+    
+}, [draggedItem, draggedItemType, dispatchCalEvent, dispatchCalTask]);
+
 
   const handleResizeStart = useCallback((item, type, resizePos, e) => {
     e.stopPropagation();
@@ -400,3 +403,4 @@ export default function WeekView() {
     </div>
   );
 }
+//Tasks drag end  need to be fixed
