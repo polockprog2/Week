@@ -1,5 +1,4 @@
 import React, { useContext } from "react";
-import dayjs from "dayjs";
 import GlobalContext from "../context/GlobalContext";
 
 export default function CalendarEvent({ event }) {
@@ -15,8 +14,6 @@ export default function CalendarEvent({ event }) {
     setShowEventModal(true);
   }
 
-  const startTime = dayjs(event.startTime).format("h:mm A");
-  const endTime = dayjs(event.endTime).format("h:mm A");
   
   return (
     <div

@@ -3,6 +3,7 @@ import React, { useContext } from "react";
 import logo from "../assets/trust.png";
 import GlobalContext from "../context/GlobalContext";
 import ViewSwitcherDrodown from "./ViewSwitcherDrodown";
+import ProfileView from "./ProfileView";
 
 export default function CalendarHeader() {
   const { monthIndex, setMonthIndex, viewMode, setViewMode } = useContext(GlobalContext);
@@ -56,6 +57,7 @@ export default function CalendarHeader() {
       
       <div className="ml-auto flex space-x-2 items-center">
         <ViewSwitcherDrodown />
+        <ProfileView />
       </div>
     </header>
   );

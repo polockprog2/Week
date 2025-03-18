@@ -69,7 +69,7 @@ export default function Venues() {
 
             return (
               <div key={venue.id} 
-                className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                className="border rounded-lg p-4 bg-blue-100 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold text-gray-800">{venue.name}</h3>
                   <div className="flex items-center space-x-2">

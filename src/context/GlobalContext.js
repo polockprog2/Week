@@ -39,7 +39,7 @@ const savedVenuesReducer = (state, { type, payload }) => {
     case 'delete':
       return state.filter(venue => venue.id !== payload.id);
     default:
-      return state;
+      throw new Error();
   }
 };
 
@@ -76,7 +76,7 @@ export const GlobalProvider = ({ children }) => {
   const [multiDaySelection, setMultiDaySelection] = useState([]);
   const [savedEvents, dispatchCalEvent] = useReducer(savedEventsReducer, [], initEvents);
   const [savedTasks, dispatchCalTask] = useReducer(savedTasksReducer, [], initTasks);
-  const [savedVenues, dispatchVenueBooking] = useReducer(savedVenuesReducer, [], initVenues);
+  const [savedVenues, dispatchCalVenue] = useReducer(savedVenuesReducer, [], initVenues);
 
   useEffect(() => {
     localStorage.setItem("savedEvents", JSON.stringify(savedEvents));
@@ -166,7 +166,6 @@ export const GlobalProvider = ({ children }) => {
         savedTasks,
         dispatchCalTask,
         savedVenues,
-        dispatchVenueBooking,
         labels,
         setLabels,
         taskLabels,
@@ -180,7 +179,7 @@ export const GlobalProvider = ({ children }) => {
         updateLabel,
         updateTaskLabel,
         savedVenues: [],
-        dispatchCalVenue: (action) => {},
+        dispatchCalVenue,
         
       }}
     >

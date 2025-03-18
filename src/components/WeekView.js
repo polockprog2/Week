@@ -256,7 +256,8 @@ export default function WeekView() {
       handleDragEnd(e);
       handleResizeEnd(e);
     }}>
-      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-10">
+      
+      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20">
         <div className="flex items-center space-x-4">
           <button onClick={handlePrevWeek} className="p-2 hover:bg-gray-100 rounded-full">
             <span className="material-icons-outlined">chevron_left</span>

@@ -196,7 +196,7 @@ export default function DayView() {
 
   return (
     <div className="flex-1 h-screen overflow-y-auto">
-      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-10">
+      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20">
         <div className="flex items-center space-x-5 ml-12">
           <button 
             onClick={() => setDaySelected(daySelected.subtract(1, "day"))}

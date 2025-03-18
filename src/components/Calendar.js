@@ -39,15 +39,6 @@ export default function Day({ day, rowIdx }) {
     }
   }
 
-  function handleEventClick(event) {
-    setSelectedEvent(event);
-    setShowEventModal(true);
-  }
-  function handleEventClick(task) {
-    setSelectedTask(task);
-    setShowTaskModal(true);
-  }
-
   function handleDayMouseDown() {
     setMultiDaySelection([day]);
   }
