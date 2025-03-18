@@ -30,10 +30,10 @@ export default function CreateEventButton() {
         className="border p-2 rounded-full flex items-center shadow-md hover:shadow-2xl"
       >
         <img src={plusImg} alt="create_event" className="w-7 h-7" />
-        <span className="pl-3 pr-7"> Create</span>
+        <span className="pl-3 pr-7 font-bold"> Create</span>
       </button>
       {isOpen && (
-        <div className="bg-blue-300 shadow-lg rounded-md">
+        <div className="bg-blue-100 font-bold  shadow-lg rounded-md">
           <button
             onClick={handleCreateEvent}
             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -46,12 +46,7 @@ export default function CreateEventButton() {
           >
             Task
           </button>
-          <button
-            onClick={handleCreateVenue}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Venue
-          </button>
+          
         </div>
     
       )}
