@@ -3,9 +3,10 @@ import dayjs from "dayjs";
 import Day from "./Day";
 import GlobalContext from "../context/GlobalContext";
 
-export default function Month({ month }) {
+export default function Month({ month,venues }) {
   const [selectedDays, setSelectedDays] = useState([]);
   const [dragging, setDragging] = useState(false);
+  
   const { 
     filteredEvents, 
     filteredTasks, 
@@ -13,6 +14,8 @@ export default function Month({ month }) {
     setShowTaskModal, 
     setSelectedEvent, 
     setSelectedTask,
+    setSelectedVenue,
+    setShowVenueModal,
     setDaySelected,
     setMultiDaySelection
   } = useContext(GlobalContext);
@@ -72,7 +75,12 @@ export default function Month({ month }) {
     setSelectedTask(task);
     setTimeout(() => setShowTaskModal(true), 0);
   }, [setSelectedTask, setShowTaskModal]);
-
+  
+  const handleVenueClick = useCallback((venues, e) => {
+    e.stopPropagation();
+    setSelectedVenue(venues);
+    setTimeout(() => setShowVenueModal(true), 0);
+  }, [setSelectedVenue, setShowVenueModal]);
   return (
     <div
       className="flex-1 grid grid-cols-7 grid-rows-5 border-rounded-md shadow-md"
@@ -104,13 +112,19 @@ export default function Month({ month }) {
                 tasks={filteredTasks.filter(
                   (task) => dayjs(task.dueDate).format("DD-MM-YY") === day.format("DD-MM-YY")
                 )}
+                venues = {venues.filter(
+                  (venue) => dayjs(venue.day).format("DD-MM-YY") === day.format("DD-MM-YY")
+                )}
+
                 onEventClick={handleEventClick}
                 onTaskClick={handleTaskClick}
+                onVenueClick={handleVenueClick}
               />
             );
           })}
         </React.Fragment>
       ))}
     </div>
+    
   );
 }

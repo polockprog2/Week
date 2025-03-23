@@ -13,7 +13,7 @@ const venues = [
 
 export default function Venues() {
   const { 
-    savedVenues, 
+    savedVenues,
     daySelected, 
     setShowVenueModal,
     setSelectedVenue,

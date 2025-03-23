@@ -271,7 +271,7 @@ export default function WeekView() {
         </div>
         <button 
           onClick={() => setStartOfWeek(dayjs().startOf("week"))}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-4 py-2 bg-white-500 text-black rounded-lg hover:bg-white-600"
         >
           Today
         </button>

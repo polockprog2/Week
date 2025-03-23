@@ -2,6 +2,7 @@ import React, { useState, useReducer, useEffect, useMemo } from "react";
 import dayjs from "dayjs";
 import GlobalContext from "./GlobalContext";
 
+
 function savedEventsReducer(state, { type, payload }) {
   switch (type) {
     case "push":
@@ -73,7 +74,7 @@ export default function ContextWrapper(props) {
   const [savedEvents, dispatchCalEvent] = useReducer(savedEventsReducer, [], initEvents);
   const [savedTasks, dispatchCalTask] = useReducer(savedTasksReducer, [], initTasks);
   const [savedVenues, dispatchCalVenue] = useReducer(savedVenuesReducer, [], initVenues);
- 
+  
   const filteredEvents = useMemo(() => {
     return savedEvents.filter((evt) =>
       labels
@@ -133,25 +134,6 @@ export default function ContextWrapper(props) {
       });
     });
   }, [savedTasks]);
-
-  useEffect(() => {
-    // Track venue bookings in labels
-    const venueLabels = savedVenues.map(venue => ({
-      label: 'venue',
-      checked: true,
-      color: 'blue'
-    }));
-    
-    if (venueLabels.length > 0) {
-      setLabels(prevLabels => {
-        const existingVenueLabel = prevLabels.find(l => l.label === 'venue');
-        if (!existingVenueLabel) {
-          return [...prevLabels, ...venueLabels];
-        }
-        return prevLabels;
-      });
-    }
-  }, [savedVenues]);
 
   useEffect(() => {
     if (smallCalendarMonth !== null) {

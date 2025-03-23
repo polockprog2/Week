@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import dayjs from "dayjs";
 
@@ -11,7 +11,6 @@ export default function VenueModal() {
   const isTimeSlotAvailable = () => {
     const newStart = dayjs(startTime);
     const newEnd = dayjs(endTime);
-
     const overlapping = savedVenues.some(booking => {
       if (booking.venueId !== selectedVenue.venueId) return false;
       const existingStart = dayjs(booking.startTime);
@@ -22,6 +21,7 @@ export default function VenueModal() {
         (newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd))
       );
     });
+
 
     if (overlapping) {
       alert("This time slot is already booked for the selected venue.");
@@ -76,7 +76,7 @@ export default function VenueModal() {
             <span className="material-icons-outlined text-2xl inset bg-blue-100">close</span>
           </button>
         </div>
-  
+        
         {/* Form */}
         <form onSubmit={handleSubmit}>
           {/* Title Input */}

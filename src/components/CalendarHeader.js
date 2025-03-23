@@ -6,13 +6,16 @@ import ViewSwitcherDrodown from "./ViewSwitcherDrodown";
 import ProfileView from "./ProfileView";
 
 export default function CalendarHeader() {
-  const { monthIndex, setMonthIndex, viewMode, setViewMode } = useContext(GlobalContext);
+  const { startOfWeek,setStartOfWeek,monthIndex, setMonthIndex, viewMode, setViewMode } = useContext(GlobalContext);
 
   function handlePrev() {
     if (viewMode === "month") {
       setMonthIndex(monthIndex - 1);
     } else if (viewMode === "year") {
       setMonthIndex(monthIndex - 12);
+    }
+    else if(viewMode === "week"){
+      setStartOfWeek(startOfWeek.subtract(1, "week"));
     }
   }
 
@@ -22,14 +25,21 @@ export default function CalendarHeader() {
     } else if (viewMode === "year") {
       setMonthIndex(monthIndex + 12);
     }
+    else if(viewMode === "week"){
+      setStartOfWeek(startOfWeek.add(1, "week"));
+    }
   }
 
   function handleReset() {
+    if(viewMode === "month") {
     setMonthIndex(
       monthIndex === dayjs().month() ? monthIndex + Math.random() : dayjs().month()
     );
   }
-
+  else if(viewMode === "week"){
+    setStartOfWeek(dayjs().startOf("week"));
+  }
+  }
   return (
     <header className="px-4 py-2 flex items-center">
       <img src={logo} alt="calendar" className="mr-2 w-12 h-12" />
@@ -53,6 +63,7 @@ export default function CalendarHeader() {
       <h2 className="ml-4 text-xl text-gray-500 font-bold">
         {viewMode === "month" && dayjs(new Date(dayjs().year(), monthIndex)).format("MMMM YYYY")}
         {viewMode === "year" && dayjs(new Date(dayjs().year(), monthIndex)).format("YYYY")}
+       
       </h2>
       
       <div className="ml-auto flex space-x-2 items-center">

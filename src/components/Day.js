@@ -2,9 +2,12 @@ import dayjs from "dayjs";
 import React, { useContext, useState, useEffect } from "react";
 import GlobalContext from "../context/GlobalContext";
 
-export default function Day({ day, rowIdx, events, tasks }) {
+export default function Day({ day, rowIdx, events, tasks, venues}) {
   const [dayEvents, setDayEvents] = useState([]);
   const [dayTasks, setDayTasks] = useState([]);
+  const dayVenues = venues.filter((venue) =>
+    dayjs(venue.day).isSame(day, "day")
+  );
   const {
     setDaySelected,
     setShowEventModal,
@@ -17,7 +20,7 @@ export default function Day({ day, rowIdx, events, tasks }) {
 
   useEffect(() => {
     // Filter events for this day
-    const filteredEvents = events.filter(evt => {
+      const filteredEvents = events.filter(evt => {
       const eventStart = dayjs(evt.day);
       return day.isSame(eventStart, 'day');
     });
@@ -95,7 +98,7 @@ export default function Day({ day, rowIdx, events, tasks }) {
               onClick={(e) => handleEventClick(evt, e)}
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", JSON.stringify({ ...evt, type: "event" }));
+              e.dataTransfer.setData("text/plain", JSON.stringify({ ...evt, type: "event" }));
               }}
             >
               {evt.title}
@@ -116,6 +119,19 @@ export default function Day({ day, rowIdx, events, tasks }) {
               {task.title}
             </div>
           ))}
+
+          {/* Venues */}
+          <div className="flex-1">
+          {venues.map((venue, idx) => (
+            <div
+              key={idx}
+              className={`bg-${venue.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
+              //onClick={(e) => onVenueClick(venue, e)} // Handle venue click
+            >
+              {venue.title} ({venue.venueName})
+            </div>
+          ))}
+        </div>
         </div>
       </div>
     </div>

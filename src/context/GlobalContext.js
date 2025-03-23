@@ -77,6 +77,7 @@ export const GlobalProvider = ({ children }) => {
   const [savedEvents, dispatchCalEvent] = useReducer(savedEventsReducer, [], initEvents);
   const [savedTasks, dispatchCalTask] = useReducer(savedTasksReducer, [], initTasks);
   const [savedVenues, dispatchCalVenue] = useReducer(savedVenuesReducer, [], initVenues);
+  
 
   useEffect(() => {
     localStorage.setItem("savedEvents", JSON.stringify(savedEvents));

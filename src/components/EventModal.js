@@ -194,9 +194,10 @@ export default function EventModal() {
       if (selectedEvent) {
         dispatchCalEvent({ type: "delete", payload: selectedEvent });
       }
-
       // Add the new task
       dispatchCalTask({ type: "push", payload: taskData });
+
+      
       
       // Clear event data and set task data
       setSelectedEvent(null);
@@ -428,7 +429,7 @@ export default function EventModal() {
               <span className="text-gray-600">Color</span>
             </div>
             <div className="flex gap-x-2">
-              {labelsClasses.map((lblClass, i) => (
+            {labelsClasses.map((lblClass, i) => (
                 <span
                   key={i}
                   onClick={() => setSelectedLabel(lblClass)}
@@ -442,10 +443,10 @@ export default function EventModal() {
                 </span>
               ))}
             </div>
-          </div>
         </div>
+      </div>
 
-        <footer className="flex justify-end border-t p-3 mt-5">
+          <footer className="flex justify-end border-t p-3 mt-5">
           <button
             type="submit"
             onClick={handleSubmit}

@@ -1,0 +1,90 @@
+Users → Events: One-to-Many (A user can create multiple events).
+Users → Tasks: One-to-Many (A user can create multiple tasks).
+Users → VenueBookings: One-to-Many (A user can book multiple venues).
+Venues → VenueBookings: One-to-Many (A venue can have multiple bookings).
+Events → Guests: One-to-Many (An event can have multiple guests).
+
+sql queries::
+-- Create the database
+CREATE DATABASE CalendarApp;
+GO
+
+-- Use the database
+USE CalendarApp;
+GO
+
+-- Create Users table
+CREATE TABLE Users (
+    UserId INT IDENTITY(1,1) PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    Password VARCHAR(255) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- Create Events table
+CREATE TABLE Events (
+    EventId INT IDENTITY(1,1) PRIMARY KEY,
+    Title VARCHAR(255) NOT NULL,
+    Description TEXT,
+    StartTime DATETIME NOT NULL,
+    EndTime DATETIME NOT NULL,
+    Label VARCHAR(50),
+    UserId INT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+-- Create Tasks table
+CREATE TABLE Tasks (
+    TaskId INT IDENTITY(1,1) PRIMARY KEY,
+    Title VARCHAR(255) NOT NULL,
+    Description TEXT,
+    DueDate DATETIME NOT NULL,
+    Priority VARCHAR(50),
+    Status VARCHAR(50),
+    Label VARCHAR(50),
+    UserId INT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+-- Create Venues table
+CREATE TABLE Venues (
+    VenueId INT IDENTITY(1,1) PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    Capacity INT NOT NULL,
+    Location VARCHAR(255),
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- Create VenueBookings table
+CREATE TABLE VenueBookings (
+    BookingId INT IDENTITY(1,1) PRIMARY KEY,
+    VenueId INT NOT NULL,
+    UserId INT NOT NULL,
+    Title VARCHAR(255) NOT NULL,
+    StartTime DATETIME NOT NULL,
+    EndTime DATETIME NOT NULL,
+    Description TEXT,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (VenueId) REFERENCES Venues(VenueId),
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+-- Create Guests table
+CREATE TABLE Guests (
+    GuestId INT IDENTITY(1,1) PRIMARY KEY,
+    EventId INT NOT NULL,
+    Name VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL,
+    RSVPStatus VARCHAR(50),
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (EventId) REFERENCES Events(EventId)
+);

@@ -12,10 +12,12 @@ import Venues from "./components/Venues";
 import GlobalContext from "./context/GlobalContext";
 import EventModal from "./components/EventModal";
 import TaskModal from "./components/TaskModal";
+import VenueModal from "./components/VenueModal";
+
 
 function App() {
   const [currentMonth, setCurrentMonth] = useState(getMonth());
-  const { monthIndex, showEventModal, showTaskModal, viewMode } = useContext(GlobalContext);
+  const { monthIndex, showEventModal, showTaskModal, showVenueModal,viewMode ,savedVenues} = useContext(GlobalContext);
   
   useEffect(() => {
     setCurrentMonth(getMonth(monthIndex));
@@ -24,14 +26,15 @@ function App() {
   return (
     <React.Fragment>
       {showEventModal && <EventModal />}
-      {showTaskModal && <TaskModal />}
-      
+      {showTaskModal  && <TaskModal />}
+      {showVenueModal && <VenueModal/>}
+    
       <div className="h-screen flex flex-col">
         <CalendarHeader />
         <div className="flex flex-1">
           <Sidebar />
           <div className="flex flex-1">
-            {viewMode === "month" && <Month month={currentMonth} />}
+            {viewMode === "month" && <Month month={currentMonth} venues={savedVenues}/>}
             {viewMode === "week" && <WeekView />}
             {viewMode === "day" && <DayView />}
             {viewMode === "year" && <YearView year={dayjs().year()} />}
