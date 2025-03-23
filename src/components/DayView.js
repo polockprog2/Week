@@ -10,6 +10,7 @@ export default function DayView() {
     setShowEventModal, 
     setDaySelected,
     setSelectedEvent,
+    setSelectedTask,
     dispatchCalEvent,
     viewMode,
     setShowTaskModal,
@@ -66,6 +67,12 @@ export default function DayView() {
     // Then show the modal
     setTimeout(() => setShowEventModal(true), 0);
   }, [setSelectedEvent, setShowEventModal, draggedEvent, resizingEvent, viewMode]);
+
+  const handleTaskClick = (task, e) => {
+    e?.stopPropagation(); // Prevent other click handlers from triggering
+    setSelectedTask(task); // Set the selected task in the global context
+    setShowTaskModal(true); // Show the task modal
+  };
 
   // Update current time every minute
   useEffect(() => {
@@ -335,7 +342,7 @@ export default function DayView() {
                   top: getTimePosition(dayjs(task.dueDate)),
                   zIndex: 25
                 }}
-                onClick={() => handleEventClick(task)}
+                onClick={() => handleTaskClick(task)}
               >
                 <div className="font-semibold text-lg text-white truncate">{task.title}</div>
               </div>
