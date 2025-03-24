@@ -29,7 +29,6 @@ export default function AgendaView() {
       dayjs(`${a.day} ${a.time}`).diff(dayjs(`${b.day} ${b.time}`))
     );
 
-    // Group items by date
     return allItems.reduce((acc, item) => {
       if (!acc[item.day]) {
         acc[item.day] = [];
@@ -40,39 +39,34 @@ export default function AgendaView() {
   }, [savedEvents, savedTasks]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Agenda</h1>
+    <div className="flex-1 h-screen overflow-y-auto">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Schedule</h1>
       {Object.keys(groupedAgendaItems).length === 0 ? (
-        <p className="text-gray-500">No upcoming events or tasks.</p>
+        <p className="text-gray-500 text-lg">No upcoming events or tasks.</p>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Object.keys(groupedAgendaItems).map((date) => (
-            <div key={date}>
-              <h2 className="text-lg font-bold text-gray-700 mb-2">
+            <div key={date} className="">
+              <h2 className="text-lg font-semibold text-gray-700 mb-2">
                 {dayjs(date).format("dddd, MMMM D, YYYY")}
               </h2>
-              <ul className="space-y-6 relative z-10">
+              <div className="border-l-4 border-blue-500 pl-4 space-y-4">
                 {groupedAgendaItems[date].map((item) => (
-                  <li
-                    key={item.id}
-                    className={`p-4 rounded-lg shadow-md ${
-                      item.type === "event"
-                        ? `bg-${item.label}-100 text-${item.label}-800`
-                        : `bg-${item.label}-200 text-${item.label}-900`
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold">{item.title}</h3>
-                      <span className="text-sm text-gray-600">
-                        {dayjs(`${item.day} ${item.time}`).format("h:mm A")}
-                      </span>
+                  <div key={item.id} className="flex items-center space-x-4">
+                    <div className="w-24 text-right text-sm text-gray-600">
+                      {dayjs(`${item.day} ${item.time}`).format("h:mm A")}
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {item.type === "event" ? "Event" : "Task"}
-                    </p>
-                  </li>
+                    <div
+                      className={`p-3 rounded-md shadow-sm w-full border-l-4 bg-${item.label}-100 text-${item.label}-800`}
+                    >
+                      <h3 className="text-md font-semibold">{item.title}</h3>
+                      <p className="text-xs text-gray-500">
+                        {item.type === "event" ? "Event" : "Task"}
+                      </p>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           ))}
         </div>
