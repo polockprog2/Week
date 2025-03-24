@@ -37,6 +37,7 @@ export default function CalendarHeader() {
   else if(viewMode === "week"){
     setStartOfWeek(dayjs().startOf("week"));
   }
+  
   }
   return (
     <header className="px-4 py-2 flex items-center bg-gray-50  shadow-md border-g">

@@ -4,7 +4,7 @@ export default function ProfilePopup({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-0 mt-2 w-84 bg-blue-50 rounded-lg shadow-lg overflow-hidden z-50">
+    <div className="absolute right-0 mt-2 w-84 bg-gray-50 rounded-lg shadow-lg overflow-hidden z-50">
       <div className="p-4">
         <h2 className="text-xl font-semibold mb-4">Profile</h2>
         <div className="flex items-center space-x-4">

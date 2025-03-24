@@ -74,7 +74,7 @@ export default function Venues() {
                   <h3 className=" font-semibold text-gray-800">{venue.name}</h3>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      available ? 'bg-green-50 text-green-400' : 'bg-red-100 text-red-800'
+                      available ? 'bg-green-400 text-green-900' : 'bg-red-100 text-red-800'
                     }`}>
                       {available ? 'Available' : 'Occupied'}
                     </span>

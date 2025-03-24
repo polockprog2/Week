@@ -7,6 +7,7 @@ const labelsClasses = [
   "purple",
   "yellow",
   "pink",
+  "teal"
  
 ];
 
@@ -50,7 +51,7 @@ module.exports = {
     ...labelsClasses.map((lbl) => `hover:bg-${lbl}-800`),
     ...labelsClasses.map((lbl) => `hover:bg-${lbl}-900`),
   ],
-  darkMode: false,
+  darkMode: true,
   theme: {
     extend: {
       fontFamily: {
