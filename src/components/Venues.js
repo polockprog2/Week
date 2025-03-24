@@ -62,16 +62,16 @@ export default function Venues() {
             {daySelected.format('dddd, MMMM D, YYYY')}
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
           {venues.map(venue => {
             const bookings = getVenueBookings(venue.id);
             const available = isVenueAvailable(bookings);
 
             return (
               <div key={venue.id} 
-                className="border rounded-lg p-4 bg-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                className="border rounded-lg p-4 bg-blue-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-gray-800">{venue.name}</h3>
+                  <h3 className=" font-semibold text-gray-800">{venue.name}</h3>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -98,9 +98,9 @@ export default function Venues() {
                     <div className="space-y-2">
                       {bookings.map((booking, idx) => (
                         <div key={idx} 
-                          className="text-xs bg-gray-50 p-2 rounded border border-gray-100">
-                          <div className="font-medium">{booking.title}</div>
-                          <div className="text-gray-500">
+                          className="text-xs font-semibold bg-green-200 p-2 rounded border border-gray-100">
+                          <div className="text-xsfont-medium">{booking.title}</div>
+                          <div className="text-xs text-gray-500">
                             {dayjs(booking.startTime).format('HH:mm')} - 
                             {dayjs(booking.endTime).format('HH:mm')}
                           </div>

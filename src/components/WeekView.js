@@ -249,14 +249,14 @@ export default function WeekView() {
      (item.dueDate && resizingItemType === 'task'));
 
   return (
-    <div className="flex-1 h-screen overflow-y-auto" onMouseMove={(e) => {
+    <div className="flex-1 h-screen overflow-hidden" onMouseMove={(e) => {
       handleDrag(e);
       handleResize(e);
     }} onMouseUp={(e) => {
       handleDragEnd(e);
       handleResizeEnd(e);
     }}>
-      
+      {/* Week days header */}
       <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20">
         <div className="flex items-center space-x-4">
           <button onClick={handlePrevWeek} className="p-2 hover:bg-gray-100 rounded-full">
@@ -276,7 +276,7 @@ export default function WeekView() {
           Today
         </button>
       </header>
-      {/* Week days header */}
+      
       <div className="flex border-b sticky top-16 bg-white z-10">
         <div className="w-20" /> {/* Time gutter */}
         {daysOfWeek.map(day => (

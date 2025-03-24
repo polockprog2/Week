@@ -237,7 +237,7 @@ export default function DayView() {
 
         {/* Time grid */}
         <div 
-          className="flex-1 relative bg-gray-50"
+          className="flex-1 relative bg-gray-100 overflow-hidden"
           onMouseMove={(e) => {
             handleDrag(e);
             handleResize(e);

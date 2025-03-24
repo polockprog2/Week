@@ -15,7 +15,7 @@ export default function ProfilePopup({ isOpen, onClose }) {
           />
           <div>
             <div className="text-lg font-semibold">Polock</div>
-            <div className="text-sm text-gray-500">samirislampolock18@example.com</div>
+            <div className="text-sm text-gray-500">samirislampolock18@gmail.com</div>
           </div>
         </div>
         <div className="mt-4">

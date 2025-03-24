@@ -64,7 +64,7 @@ export default function VenueModal() {
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white rounded-lg shadow-xl overflow-hidden w-1/3 min-w-[300px] max-w-[500px]">
+    <div className="bg-white rounded-lg shadow-xl overflow-hidden w-1/4 min-w-[300px] max-w-[500px]">
       <div className="p-6">
         {/* Modal Header */}
         <div className="flex justify-between items-center mb-6">
