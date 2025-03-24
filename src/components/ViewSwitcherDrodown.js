@@ -17,9 +17,9 @@ export default function ViewSwitcherDropdown() {
     { label: "Month", value: "month" },
     { label: "Week", value: "week" },
     { label: "Day", value: "day" },
-    { label: "Year", value: "year" },
     { label: "Venues", value: "venues" },
-    {label : "Agenda", value: "agenda"}
+    {label : "Agenda", value: "agenda"},
+    { label: "Year", value: "year" },
   ];
 
   return (

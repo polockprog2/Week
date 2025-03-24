@@ -74,7 +74,7 @@ export default function Venues() {
                   <h3 className=" font-semibold text-gray-800">{venue.name}</h3>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      available ? 'bg-green-50 text-green-400' : 'bg-red-100 text-red-800'
                     }`}>
                       {available ? 'Available' : 'Occupied'}
                     </span>
@@ -98,7 +98,7 @@ export default function Venues() {
                     <div className="space-y-2">
                       {bookings.map((booking, idx) => (
                         <div key={idx} 
-                          className="text-xs font-semibold bg-green-200 p-2 rounded border border-gray-100">
+                          className="text-xs font-semibold bg-green-50 p-2 rounded border border-gray-100">
                           <div className="text-xsfont-medium">{booking.title}</div>
                           <div className="text-xs text-gray-500">
                             {dayjs(booking.startTime).format('HH:mm')} - 
