@@ -1,6 +1,10 @@
 import dayjs from "dayjs";
 import React, { useContext, useState, useEffect } from "react";
 import GlobalContext from "../context/GlobalContext";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+
+// Extend dayjs with the isSameOrAfter plugin
+dayjs.extend(isSameOrAfter);
 
 export default function Day({ day, rowIdx, events, tasks, venues}) {
   const [dayEvents, setDayEvents] = useState([]);

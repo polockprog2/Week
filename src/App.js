@@ -13,6 +13,7 @@ import GlobalContext from "./context/GlobalContext";
 import EventModal from "./components/EventModal";
 import TaskModal from "./components/TaskModal";
 import VenueModal from "./components/VenueModal";
+import AgendaView from "./components/AgendaView";
 
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
             {viewMode === "day" && <DayView />}
             {viewMode === "year" && <YearView year={dayjs().year()} />}
             {viewMode === "venues" && <Venues />}
+            {viewMode === "agenda" && <AgendaView />}
           </div>
         </div>
       </div>
