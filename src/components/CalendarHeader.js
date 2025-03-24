@@ -6,7 +6,7 @@ import ViewSwitcherDrodown from "./ViewSwitcherDrodown";
 import ProfileView from "./ProfileView";
 
 export default function CalendarHeader() {
-  const { startOfWeek,setStartOfWeek,monthIndex, setMonthIndex, viewMode, setViewMode } = useContext(GlobalContext);
+  const { startOfWeek,setStartOfWeek,monthIndex, setMonthIndex, viewMode } = useContext(GlobalContext);
 
   function handlePrev() {
     if (viewMode === "month") {
@@ -14,9 +14,7 @@ export default function CalendarHeader() {
     } else if (viewMode === "year") {
       setMonthIndex(monthIndex - 12);
     }
-    else if(viewMode === "week"){
-      setStartOfWeek(startOfWeek.subtract(1, "week"));
-    }
+
   }
 
   function handleNext() {
@@ -41,7 +39,7 @@ export default function CalendarHeader() {
   }
   }
   return (
-    <header className="px-4 py-2 flex items-center">
+    <header className="px-4 py-2 flex items-center bg-gray-50  shadow-md border-g">
       <img src={logo} alt="calendar" className="mr-2 w-12 h-12" />
       <h1 className="mr-10 text-xl text-gray-500 font-bold">Trust Bank PLC</h1>
       
