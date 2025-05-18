@@ -12,7 +12,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="border-rounded p-6 w-80 shadow-md bg-gray-50 border-b">
+    <aside className="border-rounded p-6 w-80 shadow-md bg-green-100 border-b">
       <CreateEventButton />
       <SmallCalendar />
       <input

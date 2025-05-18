@@ -8,18 +8,19 @@
       "type": "image/x-icon"
     },
     {
-      "src": "",
+      "src": "trust.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "",
+      "src": "trust.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": ".",
   "display": "standalone",
+  "orientation": "portrait",
   "theme_color": "#000000",
   "background_color": "#ffffff"
 }

@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 
 const priorityClasses = ["low", "medium", "high"];
 const statusClasses = ["todo", "in-progress", "done"];
-const labelsClasses = ["purple", "green", "yellow","red","pink","gray","blue"];  
+const labelsClasses = ["purple", "green", "yellow","pink","gray","blue"];  
 
 export default function TaskModal() {
   const {

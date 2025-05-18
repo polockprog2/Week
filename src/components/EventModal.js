@@ -7,7 +7,6 @@ import dayjs from "dayjs";
 const labelsClasses = [
   "indigo",
   "red",
-  "blue",
   "teal",
   "cyan",
 ];
@@ -51,7 +50,7 @@ export default function EventModal() {
     selectedEvent
       ? labelsClasses.find((lbl) => lbl === selectedEvent.label)
       : selectedTask
-      ? labelsClasses.find((lbl) => lbl === selectedTask.label)//might need to fix this part/line
+      ? labelsClasses.find((lbl) => lbl === selectedTask.label) //might need to fix this part/line
       : labelsClasses[0]
   );
   const [reminder, setReminder] = useState(
@@ -68,6 +67,10 @@ export default function EventModal() {
     selectedEvent && selectedEvent.guests ? selectedEvent.guests : []
   );
 
+  const [isTimeEnabled, setIsTimeEnabled] = useState(
+    selectedEvent ? !!selectedEvent.startTime : false
+  );
+
   useEffect(() => {
     if (selectedEvent || selectedTask) {
       setTitle(selectedEvent ? selectedEvent.title : selectedTask.title);
@@ -82,7 +85,8 @@ export default function EventModal() {
       if (selectedEvent && selectedEvent.endDay) {
         setEndDay(dayjs(selectedEvent.endDay));
       }
-    } else if (multiDaySelection.length > 1) {
+    } 
+    else if (multiDaySelection.length > 1) {
       const sortedDays = [...multiDaySelection].sort((a, b) => a.valueOf() - b.valueOf());
       setSelectedDay(sortedDays[0]);
       setEndDay(sortedDays[sortedDays.length - 1]);
@@ -97,27 +101,29 @@ export default function EventModal() {
       alert("Please enter a title");
       return;
     }
+    let startDateTime = 0;
+    let endDateTime = 0;
 
-    if (!startTime || !endTime) {
-      alert("Please select start and end times");
-      return;
-    }
+    if (isTimeEnabled) {
+      if (!startTime || !endTime) {
+        alert("Please select start and end times");
+        return;
+      }
 
-    // Validate end time is after start time
-    const startDateTime = dayjs(`${selectedDay.format('YYYY-MM-DD')} ${startTime}`);
-    let endDateTime;
-    
-    if (endDay.isAfter(selectedDay, 'day')) {
-      // Multi-day event
-      endDateTime = dayjs(`${endDay.format('YYYY-MM-DD')} ${endTime}`);
-    } else {
-      // Single day event
-      endDateTime = dayjs(`${selectedDay.format('YYYY-MM-DD')} ${endTime}`);
-    }
-    
-    if (endDateTime.isBefore(startDateTime)) {
-      alert("End time must be after start time");
-      return;
+      // Validate end time is after start time
+      startDateTime = dayjs(
+        `${selectedDay.format("YYYY-MM-DD")} ${startTime}`
+      );
+      if (endDay.isAfter(selectedDay, "day")) {
+        endDateTime = dayjs(`${endDay.format("YYYY-MM-DD")} ${endTime}`);
+      } else {
+        endDateTime = dayjs(`${selectedDay.format("YYYY-MM-DD")} ${endTime}`);
+      }
+
+      if (endDateTime.isBefore(startDateTime)) {
+        alert("End time must be after start time");
+        return;
+      }
     }
     
     const calendarEvent = {
@@ -431,7 +437,7 @@ export default function EventModal() {
             <div className="flex gap-x-2">
             {labelsClasses.map((lblClass, i) => (
                 <span
-                  key={i}
+                  key={i} 
                   onClick={() => setSelectedLabel(lblClass)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
                     selectedLabel === lblClass ? 'ring-2 ring-offset-2 ring-blue-600' : ''

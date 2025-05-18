@@ -114,7 +114,6 @@ export default function DayView() {
     const startMinutes = Math.min(Math.max(startTime.hour() * 60 + startTime.minute(), 0), 1439);
     const endMinutes = Math.min(Math.max(endTime.hour() * 60 + endTime.minute(), 0), 1439);
     const durationMinutes = Math.max(endMinutes - startMinutes, 30);
-    
     const overlappingEvents = getOverlappingEvents(event, dayEvents);
     const totalOverlapping = overlappingEvents.length + 1;
     const position = overlappingEvents.findIndex(evt => evt.id < event.id) + 1;

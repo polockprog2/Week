@@ -40,11 +40,11 @@ export default function CalendarHeader() {
   
   }
   return (
-    <header className="px-4 py-2 flex items-center bg-gray-50  shadow-md border-g">
+    <header className="px-4 py-2 flex items-center bg-green-50  shadow-md border-g">
       <img src={logo} alt="calendar" className="mr-2 w-12 h-12" />
       <h1 className="mr-10 text-xl text-gray-500 font-bold">Trust Bank PLC</h1>
       
-      <button onClick={handleReset} className="border rounded bg-white-500 text-white-200 py-3 px-6 mr-5 hover:bg-gray-200">
+      <button onClick={handleReset} className="bg-white-500 text-white-200 py-3 px-6 mr-5 hover:bg-gray-200 boder-gray-200 rounded-full shadow-md">
         Today
       </button>
       

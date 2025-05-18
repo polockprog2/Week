@@ -51,6 +51,17 @@ module.exports = {
     ...labelsClasses.map((lbl) => `hover:bg-${lbl}-800`),
     ...labelsClasses.map((lbl) => `hover:bg-${lbl}-900`),
   ],
+  theme: {
+    extend: {
+      colors: {
+        apple: {
+          DEFAULT: '#8DB600', // Apple green color
+          500: '#8DB600',    // Optional: Define shades if needed
+        },
+      },
+    },
+  },
+  plugins: [],
   darkMode: true,
   theme: {
     extend: {

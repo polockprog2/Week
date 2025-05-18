@@ -23,10 +23,10 @@ export default function ViewSwitcherDropdown() {
   ];
 
   return (
-    <div className="relative inline-block text-left">
+    <div className="relative outlined">
       <button
         type="button"
-        className="border rounded-lg px-4 py-2 flex items-center space-x-2 text-white font-semibold shadow-md hover:shadow-2xl"
+        className="bg-white-500 text-white-200 py-3 px-6 mr-5 hover:bg-gray-200 boder-gray-200 rounded-full shadow-md"
         onClick={toggleDropdown}
       >
         <span className="text-gray-700">{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} View</span>
@@ -36,7 +36,7 @@ export default function ViewSwitcherDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-40 bg-gray-100 font-bold rounded-md shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-40 bg-gray-100 font-semibold rounded-md shadow-lg z-50">
           {viewOptions.map((option) => (
             <button
               key={option.value}

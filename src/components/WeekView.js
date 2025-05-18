@@ -177,16 +177,23 @@ export default function WeekView() {
 
   const handleDragEnd = useCallback(() => {
     if (draggedItem) {
-      dispatchCalEvent({ 
-        type: "update", 
-        payload: draggedItem,
-        itemType: draggedItemType 
-      });
+      if (draggedItemType === 'event') {
+        dispatchCalEvent({ 
+          type: "update", 
+          payload: draggedItem,
+          itemType: draggedItemType 
+        });
+      } else if (draggedItemType === 'task') {
+        dispatchCalTask({ 
+          type: "update", 
+          payload: draggedItem,
+          itemType: draggedItemType 
+        });
+      }
     }
     setDraggedItem(null);
     setDraggedItemType(null);
     setDragOffset(0);
-    
 }, [draggedItem, draggedItemType, dispatchCalEvent, dispatchCalTask]);
 
 
