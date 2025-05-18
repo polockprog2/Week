@@ -1,5 +1,6 @@
 import React, { useCallback, useContext, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
+import { venuesApi } from "../services/api";
 import dayjs from "dayjs";
 
 export default function VenueModal() {
@@ -22,7 +23,6 @@ export default function VenueModal() {
       );
     });
 
-
     if (overlapping) {
       alert("This time slot is already booked for the selected venue.");
       return false;
@@ -31,7 +31,7 @@ export default function VenueModal() {
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -58,83 +58,102 @@ export default function VenueModal() {
       day: selectedVenue.day,
     };
 
-    dispatchCalVenue({ type: "push", payload: newBooking });
-    setShowVenueModal(false);
+    try {
+      const response = await venuesApi.createBooking(selectedVenue.venueId, newBooking);
+      dispatchCalVenue({ type: "push", payload: response.data });
+      setShowVenueModal(false);
+    } catch (error) {
+      console.error("Error creating venue booking:", error);
+      alert("Failed to create booking. Please try again.");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedVenue.id) {
+      try {
+        await venuesApi.deleteBooking(selectedVenue.venueId, selectedVenue.id);
+        dispatchCalVenue({ type: "delete", payload: selectedVenue });
+        setShowVenueModal(false);
+      } catch (error) {
+        console.error("Error deleting venue booking:", error);
+        alert("Failed to delete booking. Please try again.");
+      }
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white rounded-lg shadow-xl overflow-hidden w-1/4 min-w-[300px] max-w-[500px]">
-      <div className="p-6">
-        {/* Modal Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800">Book Venue</h2>
-          <button
-            onClick={() => setShowVenueModal(false)}
-            className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
-          >
-            <span className="material-icons-outlined text-2xl inset bg-blue-100">close</span>
+    <div className="h-screen w-full fixed left-0 top-0 flex justify-center items-center">
+      <form className="bg-white rounded-lg shadow-2xl w-1/4">
+        <header className="bg-gray-100 px-4 py-2 flex justify-between items-center">
+          <span className="material-icons-outlined text-gray-400">
+            drag_handle
+          </span>
+          <button onClick={() => setShowVenueModal(false)}>
+            <span className="material-icons-outlined text-gray-400">close</span>
           </button>
-        </div>
-        
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Title Input */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+        </header>
+        <div className="p-3">
+          <div className="grid grid-cols-1/5 items-end gap-y-7">
+            <div></div>
             <input
               type="text"
+              name="title"
+              placeholder="Add booking title"
               value={title}
+              required
+              className="pt-3 border-0 text-gray-600 text-xl font-semibold pb-2 w-80 border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border bg-blue-50 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="Enter event title"
-              required
             />
+            <span className="material-icons-outlined text-gray-400">
+              schedule
+            </span>
+            <p>{dayjs(selectedVenue.day).format("dddd, MMMM DD")}</p>
+            <span className="material-icons-outlined text-gray-400">
+              access_time
+            </span>
+            <div className="flex gap-x-2">
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="pt-3 border-0 text-gray-600 pb-2 w-40 border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
+              />
+              <span className="text-gray-400">to</span>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="pt-3 border-0 text-gray-600 pb-2 w-40 border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
+              />
+            </div>
           </div>
-  
-          {/* Start Time Input */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-            <input
-              type="datetime-local"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="w-full bg-blue-50 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              required
-            />
-          </div>
-  
-          {/* End Time Input */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-            <input
-              type="datetime-local"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="w-full border bg-blue-50 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              required
-            />
-          </div>
-  
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-4">
+        </div>
+        <footer className="flex justify-end border-t p-3 mt-5">
+          {selectedVenue.id && (
             <button
               type="button"
-              onClick={() => setShowVenueModal(false)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded text-white mr-2"
             >
-              Cancel
+              Delete
             </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
-            >
-              Book
-            </button>
-          </div>
-        </form>
-      </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowVenueModal(false)}
+            className="bg-gray-500 hover:bg-gray-600 px-6 py-2 rounded text-white mr-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded text-white"
+          >
+            Save
+          </button>
+        </footer>
+      </form>
     </div>
-  </div>
   );
 }

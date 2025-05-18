@@ -1,5 +1,6 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
+import { tasksApi } from "../services/api";
 import dayjs from "dayjs";
 
 const priorityClasses = ["low", "medium", "high"];
@@ -27,18 +28,27 @@ export default function TaskModal() {
     selectedTask ? selectedTask.dueDate : daySelected.format("YYYY-MM-DD")
   );
   const [priority, setPriority] = useState(
-    selectedTask ? selectedTask.priority : priorityClasses[0]
+    selectedTask ? selectedTask.priority : "medium"
   );
   const [status, setStatus] = useState(
-    selectedTask ? selectedTask.status : statusClasses[0]
+    selectedTask ? selectedTask.status : "pending"
   );
   const [selectedLabel, setSelectedLabel] = useState(
-    selectedTask
-      ? labelsClasses.find((lbl) => lbl === selectedTask.label)
-      : labelsClasses[0]
+    selectedTask ? selectedTask.label : "blue"
   );
 
-  function handleSubmit(e) {
+  useEffect(() => {
+    if (selectedTask) {
+      setTitle(selectedTask.title);
+      setDescription(selectedTask.description);
+      setDueDate(selectedTask.dueDate);
+      setPriority(selectedTask.priority);
+      setStatus(selectedTask.status);
+      setSelectedLabel(selectedTask.label);
+    }
+  }, [selectedTask]);
+
+  async function handleSubmit(e) {
     e.preventDefault();
     const task = {
       title,
@@ -49,41 +59,33 @@ export default function TaskModal() {
       label: selectedLabel,
       id: selectedTask ? selectedTask.id : Date.now(),
       day: daySelected.format("YYYY-MM-DD"),
-      lastUpdated: Date.now(),
-      views: ['month', 'week', 'day']
     };
-    if (selectedTask) {
-      dispatchCalTask({ 
-        type: "update", 
-        payload: {
-          ...task,
-          views: ['month', 'week', 'day']
-        } 
-      });
-    } else {
-      dispatchCalTask({ 
-        type: "push", 
-        payload: {
-          ...task,
-          views: ['month', 'week', 'day']
-        } 
-      });
+
+    try {
+      if (selectedTask) {
+        await tasksApi.update(selectedTask.id, task);
+        dispatchCalTask({ type: "update", payload: task });
+      } else {
+        const response = await tasksApi.create(task);
+        dispatchCalTask({ type: "push", payload: response.data });
+      }
+      setShowTaskModal(false);
+    } catch (error) {
+      console.error("Error saving task:", error);
+      alert("Failed to save task. Please try again.");
     }
-    setShowTaskModal(false);
-    setSelectedTask(null);
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (selectedTask) {
-      dispatchCalTask({
-        type: "delete",
-        payload: {
-          ...selectedTask,
-          views: ['month', 'week', 'day']
-        }
-      });
-      setShowTaskModal(false);
-      setSelectedTask(null);
+      try {
+        await tasksApi.delete(selectedTask.id);
+        dispatchCalTask({ type: "delete", payload: selectedTask });
+        setShowTaskModal(false);
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        alert("Failed to delete task. Please try again.");
+      }
     }
   }
 

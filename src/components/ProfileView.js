@@ -16,7 +16,7 @@ export default function ProfileView() {
     <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <div className="flex items-center space-x-2 cursor-pointer ">
         <img
-          src="E:\Week\src\assets\OIP.jpg"
+          src={require('../assets/profile.jpg')}  
           alt="Profile"
           className="w-10 h-10 rounded-full"
         />

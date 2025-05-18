@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import GlobalContext from "../context/GlobalContext";
 import "../assets/styles.css";
 import dayjs from "dayjs";
+import { eventsApi } from "../services/api";
 
 
 const labelsClasses = [
@@ -93,87 +94,54 @@ export default function EventModal() {
     }
   }, [selectedEvent, selectedTask, multiDaySelection]);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    
-    // Validate required fields
-    if (!title.trim()) {
-      alert("Please enter a title");
-      return;
-    }
-    let startDateTime = 0;
-    let endDateTime = 0;
-
-    if (isTimeEnabled) {
-      if (!startTime || !endTime) {
-        alert("Please select start and end times");
-        return;
-      }
-
-      // Validate end time is after start time
-      startDateTime = dayjs(
-        `${selectedDay.format("YYYY-MM-DD")} ${startTime}`
-      );
-      if (endDay.isAfter(selectedDay, "day")) {
-        endDateTime = dayjs(`${endDay.format("YYYY-MM-DD")} ${endTime}`);
-      } else {
-        endDateTime = dayjs(`${selectedDay.format("YYYY-MM-DD")} ${endTime}`);
-      }
-
-      if (endDateTime.isBefore(startDateTime)) {
-        alert("End time must be after start time");
-        return;
-      }
-    }
-    
-    const calendarEvent = {
-      title: title.trim(),
+    const event = {
+      title,
       description,
       location,
       email,
       label: selectedLabel,
-      day: selectedDay.valueOf(),
-      endDay: endDay.valueOf(),
+      day: selectedDay.format("YYYY-MM-DD"),
+      endDay: endDay.format("YYYY-MM-DD"),
       id: selectedEvent ? selectedEvent.id : Date.now(),
       reminder,
       startTime,
       endTime,
-      startTimestamp: startDateTime.valueOf(),
-      endTimestamp: endDateTime.valueOf(),
       guests,
       lastUpdated: Date.now(),
       isMultiDay: endDay.isAfter(selectedDay, 'day'),
       views: ['month', 'week', 'day']
     };
 
-    if (selectedEvent) {
-      dispatchCalEvent({ 
-        type: "update", 
-        payload: calendarEvent
-      });
-    } else {
-      dispatchCalEvent({ 
-        type: "push", 
-        payload: calendarEvent
-      });
-    }
-
-    setShowEventModal(false);
-  }
-
-  function handleDelete() {
-    if (selectedEvent) {
-      // Delete from all views
-      dispatchCalEvent({
-        type: "delete",
-        payload: {
-          ...selectedEvent,
-          views: ['month', 'week', 'day'] // Mark that this event should be deleted from all views
-        }
-      });
+    try {
+      if (selectedEvent) {
+        await eventsApi.update(selectedEvent.id, event);
+        dispatchCalEvent({ type: "update", payload: event });
+      } else {
+        const response = await eventsApi.create(event);
+        dispatchCalEvent({ type: "push", payload: response.data });
+      }
       setShowEventModal(false);
+    } catch (error) {
+      console.error("Error saving event:", error);
+      alert("Failed to save event. Please try again.");
     }
   }
+
+  async function handleDelete() {
+    if (selectedEvent) {
+      try {
+        await eventsApi.delete(selectedEvent.id);
+        dispatchCalEvent({ type: "delete", payload: selectedEvent });
+        setShowEventModal(false);
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        alert("Failed to delete event. Please try again.");
+      }
+    }
+  }
+
   function handleAddGuest(e) {
     e.preventDefault();
     if (email.trim() && !guests.includes(email.trim())) {
