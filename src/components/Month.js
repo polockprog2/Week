@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import Day from "./Day";
 import GlobalContext from "../context/GlobalContext";
 
-export default function Month({ month,venues }) {
+export default function Month({ month, venues }) {
   const [selectedDays, setSelectedDays] = useState([]);
   const [dragging, setDragging] = useState(false);
   
@@ -17,7 +17,7 @@ export default function Month({ month,venues }) {
     setSelectedVenue,
     setShowVenueModal,
     setDaySelected,
-    setMultiDaySelection
+    setMultiDaySelection,
   } = useContext(GlobalContext);
 
   function handleMouseDown(day) {
@@ -35,13 +35,13 @@ export default function Month({ month,venues }) {
       // If dragging backwards
       if (day.isBefore(startDay)) {
         while (currentDay.isAfter(day)) {
-          currentDay = currentDay.subtract(1, 'day');
+          currentDay = currentDay.subtract(1, "day");
           days.unshift(currentDay);
         }
       } else {
         // If dragging forwards
         while (currentDay.isBefore(day)) {
-          currentDay = currentDay.add(1, 'day');
+          currentDay = currentDay.add(1, "day");
           days.push(currentDay);
         }
       }
@@ -64,23 +64,32 @@ export default function Month({ month,venues }) {
     setDragging(false);
   }
 
-  const handleEventClick = useCallback((event, e) => {
+  const handleEventClick = useCallback(
+    (event, e) => {
     e.stopPropagation();
     setSelectedEvent(event);
     setTimeout(() => setShowEventModal(true), 0);
-  }, [setSelectedEvent, setShowEventModal]);
+    },
+    [setSelectedEvent, setShowEventModal]
+  );
 
-  const handleTaskClick = useCallback((task, e) => {
+  const handleTaskClick = useCallback(
+    (task, e) => {
     e.stopPropagation();
     setSelectedTask(task);
     setTimeout(() => setShowTaskModal(true), 0);
-  }, [setSelectedTask, setShowTaskModal]);
+    },
+    [setSelectedTask, setShowTaskModal]
+  );
   
-  const handleVenueClick = useCallback((venues, e) => {
+  const handleVenueClick = useCallback(
+    (venues, e) => {
     e.stopPropagation();
     setSelectedVenue(venues);
     setTimeout(() => setShowVenueModal(true), 0);
-  }, [setSelectedVenue, setShowVenueModal]);
+    },
+    [setSelectedVenue, setShowVenueModal]
+  );
   return (
     <div
       className="flex-1 grid grid-cols-7 grid-rows-5 border-rounded-md shadow-md"
@@ -90,8 +99,8 @@ export default function Month({ month,venues }) {
       {month.map((row, i) => (
         <React.Fragment key={i}>
           {row.map((day, idx) => {
-            const isSelected = selectedDays.some(d => d.isSame(day, 'day'));
-            const selectionIndex = selectedDays.findIndex(d => d.isSame(day, 'day'));
+            const isSelected = selectedDays.some((d) => d.isSame(day, "day"));
+            const selectionIndex = selectedDays.findIndex((d) => d.isSame(day, "day"));
             const isSelectionStart = selectionIndex === 0;
             const isSelectionEnd = selectionIndex === selectedDays.length - 1;
             
@@ -112,10 +121,9 @@ export default function Month({ month,venues }) {
                 tasks={filteredTasks.filter(
                   (task) => dayjs(task.dueDate).format("DD-MM-YY") === day.format("DD-MM-YY")
                 )}
-                venues = {venues.filter(
+                venues={venues.filter(
                   (venue) => dayjs(venue.day).format("DD-MM-YY") === day.format("DD-MM-YY")
                 )}
-
                 onEventClick={handleEventClick}
                 onTaskClick={handleTaskClick}
                 onVenueClick={handleVenueClick}
@@ -125,6 +133,5 @@ export default function Month({ month,venues }) {
         </React.Fragment>
       ))}
     </div>
-    
   );
 }

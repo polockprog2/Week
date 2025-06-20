@@ -68,10 +68,6 @@ export default function EventModal() {
     selectedEvent && selectedEvent.guests ? selectedEvent.guests : []
   );
 
-  const [isTimeEnabled, setIsTimeEnabled] = useState(
-    selectedEvent ? !!selectedEvent.startTime : false
-  );
-
   useEffect(() => {
     if (selectedEvent || selectedTask) {
       setTitle(selectedEvent ? selectedEvent.title : selectedTask.title);
@@ -96,50 +92,66 @@ export default function EventModal() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const isUpdate = !!selectedEvent;
     const event = {
-      title,
-      description,
-      location,
-      email,
-      label: selectedLabel,
-      day: selectedDay.format("YYYY-MM-DD"),
-      endDay: endDay.format("YYYY-MM-DD"),
-      id: selectedEvent ? selectedEvent.id : Date.now(),
-      reminder,
-      startTime,
-      endTime,
-      guests,
-      lastUpdated: Date.now(),
-      isMultiDay: endDay.isAfter(selectedDay, 'day'),
-      views: ['month', 'week', 'day']
+      // Only include EventId if updating
+      ...(isUpdate ? { EventId: selectedEvent.EventId } : {}),
+      Title: title,
+      Description: description,
+      Location: location,
+      Email: email,
+      Label: selectedLabel,
+      Day: selectedDay.format("YYYY-MM-DD"),
+      EndDay: endDay.format("YYYY-MM-DD"),
+      Reminder: reminder,
+      StartTime: startTime,
+      EndTime: endTime,
+      LastUpdated: Date.now(),
+      IsMultiDay: endDay.isAfter(selectedDay, 'day'),
+      Views: JSON.stringify(['month', 'week', 'day']),
+      // Guests: guests.join(',') // Only if your backend supports this field
     };
 
     try {
-      if (selectedEvent) {
-        await eventsApi.update(selectedEvent.id, event);
-        dispatchCalEvent({ type: "update", payload: event });
+      let response;
+      if (isUpdate) {
+        response = await eventsApi.update(selectedEvent.eventId, event);
+        dispatchCalEvent({ type: "update", payload: response.data });
       } else {
-        const response = await eventsApi.create(event);
-        dispatchCalEvent({ type: "push", payload: response.data });
+        response = await eventsApi.create(event);
+        if (typeof response.data === "object") {
+          dispatchCalEvent({ type: "push", payload: response.data });
+        }
+        setShowEventModal(false);
       }
       setShowEventModal(false);
-    } catch (error) {
-      console.error("Error saving event:", error);
-      alert("Failed to save event. Please try again.");
+    } 
+    catch (error) {
+      if (error.response) {
+        alert(`Error: ${error.response.status} - ${error.response.data?.message || error.response.statusText}`);
+        console.error("Error data:", error.response.data);
+      } else if (error.request) {
+        alert("No response from server. Please check your backend.");
+        console.error("Error request:", error.request);
+      } else {
+        alert(`Error: ${error.message}`);
+        console.error("Error message:", error.message);
+      }
+      }
     }
-  }
-
+    
   async function handleDelete() {
     if (selectedEvent) {
       try {
-        await eventsApi.delete(selectedEvent.id);
-        dispatchCalEvent({ type: "delete", payload: selectedEvent });
-        setShowEventModal(false);
-      } catch (error) {
+        await eventsApi.delete(selectedEvent.eventId);
+        dispatchCalEvent({ type: "delete", payload: {eventId: selectedEvent.eventId} });
+    setShowEventModal(false);
+  }
+      catch (error) {
         console.error("Error deleting event:", error);
         alert("Failed to delete event. Please try again.");
-      }
     }
+  }
   }
 
   function handleAddGuest(e) {
@@ -160,7 +172,6 @@ export default function EventModal() {
         dueDate: startTime ? dayjs(`${selectedDay.format('YYYY-MM-DD')} ${startTime}`).format('YYYY-MM-DD HH:mm') : selectedDay.format('YYYY-MM-DD HH:mm'),
         priority: 'medium',
         status: 'todo',
-        id: selectedEvent ? selectedEvent.id : Date.now(), // Preserve ID if converting existing event
         day: selectedDay.format("YYYY-MM-DD"),
       };
       
@@ -171,8 +182,6 @@ export default function EventModal() {
       // Add the new task
       dispatchCalTask({ type: "push", payload: taskData });
 
-      
-      
       // Clear event data and set task data
       setSelectedEvent(null);
       setShowEventModal(false);

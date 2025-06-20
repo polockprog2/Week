@@ -3,9 +3,17 @@ import GlobalContext from "../context/GlobalContext";
 import { tasksApi } from "../services/api";
 import dayjs from "dayjs";
 
+// Always pass the full task object to setSelectedTask when clicking a task.
+
+function safeDate(date) {
+  const minDate = new Date("1753-01-01T00:00:00Z");
+  const d = new Date(date);
+  return isNaN(d.getTime()) || d < minDate ? minDate.toISOString() : d.toISOString();
+}
+
 const priorityClasses = ["low", "medium", "high"];
 const statusClasses = ["todo", "in-progress", "done"];
-const labelsClasses = ["purple", "green", "yellow","pink","gray","blue"];  
+const labelsClasses = ["purple", "green", "yellow", "pink", "gray", "blue"];
 
 export default function TaskModal() {
   const {
@@ -18,12 +26,12 @@ export default function TaskModal() {
     setSelectedEvent,
     showTaskModal,
     dispatchCalEvent,
+    fetchTasks, // get fetchTasks from context
   } = useContext(GlobalContext);
 
-  const [title, setTitle] = useState(selectedTask ? selectedTask.title : "");
-  const [description, setDescription] = useState(
-    selectedTask ? selectedTask.description : ""
-  );
+  // Always use fallback values for controlled inputs
+  const [title, setTitle] = useState(selectedTask?.title || "");
+  const [description, setDescription] = useState(selectedTask?.description || "");
   const [dueDate, setDueDate] = useState(
     selectedTask ? selectedTask.dueDate : daySelected.format("YYYY-MM-DD")
   );
@@ -38,27 +46,46 @@ export default function TaskModal() {
   );
 
   useEffect(() => {
-    if (selectedTask) {
-      setTitle(selectedTask.title);
-      setDescription(selectedTask.description);
-      setDueDate(selectedTask.dueDate);
-      setPriority(selectedTask.priority);
-      setStatus(selectedTask.status);
-      setSelectedLabel(selectedTask.label);
-    }
-  }, [selectedTask]);
+    setTitle(selectedTask?.title || "");
+    setDescription(selectedTask?.description || "");
+    setDueDate(
+      selectedTask?.dueDate
+        ? dayjs(selectedTask.dueDate).format("YYYY-MM-DDTHH:mm")
+        : daySelected
+          ? dayjs(daySelected).format("YYYY-MM-DDT12:00")
+          : dayjs().format("YYYY-MM-DDT12:00")
+    );
+    setPriority(selectedTask?.priority || "medium");
+    setStatus(selectedTask?.status || "todo");
+    setSelectedLabel(selectedTask?.label || "blue");
+  }, [selectedTask, daySelected]);
 
+  //console.log("selectedTask:", selectedTask);
+  
+// In handleSubmit, always include TaskId for updates
   async function handleSubmit(e) {
     e.preventDefault();
+   const isUpdate = !!selectedTask && !!selectedTask.taskId;
+  const taskId = selectedTask?.taskId;
+  const now = new Date().toISOString();
+
+  const createdAtValue = selectedTask?.createdAt
+    ? selectedTask.createdAt
+    : daySelected
+      ? dayjs(daySelected).toISOString()
+      : new Date().toISOString();
+
     const task = {
+    ...(isUpdate && { taskId }),
       title,
       description,
-      dueDate,
+    dueDate: safeDate(dueDate),
       priority,
       status,
       label: selectedLabel,
-      id: selectedTask ? selectedTask.id : Date.now(),
-      day: daySelected.format("YYYY-MM-DD"),
+    userId: 1,
+    createdAt: safeDate(createdAtValue),
+    updatedAt: now,
     };
 
     try {
