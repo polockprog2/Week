@@ -175,18 +175,20 @@ export default function WeekView() {
     }
   }, [draggedItem, draggedItemType, dragOffset, snapToGrid]);
 
+  // --- TASKS DRAG END FIX ---
+  // Update handleDragEnd to use TaskId for tasks (not id), and EventId for events (not id).
   const handleDragEnd = useCallback(() => {
     if (draggedItem) {
       if (draggedItemType === 'event') {
         dispatchCalEvent({ 
           type: "update", 
-          payload: draggedItem,
+          payload: { ...draggedItem, EventId: draggedItem.EventId || draggedItem.eventId }, // ensure correct key
           itemType: draggedItemType 
         });
       } else if (draggedItemType === 'task') {
         dispatchCalTask({ 
           type: "update", 
-          payload: draggedItem,
+          payload: { ...draggedItem, TaskId: draggedItem.TaskId || draggedItem.id }, // ensure correct key
           itemType: draggedItemType 
         });
       }
@@ -194,7 +196,7 @@ export default function WeekView() {
     setDraggedItem(null);
     setDraggedItemType(null);
     setDragOffset(0);
-}, [draggedItem, draggedItemType, dispatchCalEvent, dispatchCalTask]);
+  }, [draggedItem, draggedItemType, dispatchCalEvent, dispatchCalTask]);
 
 
   const handleResizeStart = useCallback((item, type, resizePos, e) => {
@@ -247,13 +249,27 @@ export default function WeekView() {
     }
   }, [resizingItem, resizingItemType, dispatchCalEvent]);
 
-  const isBeingDragged = (item) => draggedItem?.id === item.id && 
-    ((item.startTime && draggedItemType === 'event') || 
-     (item.dueDate && draggedItemType === 'task'));
-  
-  const isBeingResized = (item) => resizingItem?.id === item.id && 
-    ((item.startTime && resizingItemType === 'event') || 
-     (item.dueDate && resizingItemType === 'task'));
+  const isBeingDragged = (item) => {
+    if (!draggedItem) return false;
+    if (item.startTime && draggedItemType === 'event') {
+      return (draggedItem.EventId || draggedItem.eventId) === (item.EventId || item.eventId);
+    }
+    if (item.dueDate && draggedItemType === 'task') {
+      return (draggedItem.TaskId || draggedItem.id) === (item.TaskId || item.id);
+    }
+    return false;
+  };
+
+  const isBeingResized = (item) => {
+    if (!resizingItem) return false;
+    if (item.startTime && resizingItemType === 'event') {
+      return (resizingItem.EventId || resizingItem.eventId) === (item.EventId || item.eventId);
+    }
+    if (item.dueDate && resizingItemType === 'task') {
+      return (resizingItem.TaskId || resizingItem.id) === (item.TaskId || item.id);
+    }
+    return false;
+  };
 
   return (
     <div className="flex-1 h-screen overflow-hidden" onMouseMove={(e) => {
@@ -334,7 +350,7 @@ export default function WeekView() {
 
                     return (
                       <div
-                        key={event.id}
+                        key={event.EventId || event.eventId || event.id}
                         className={`absolute rounded-lg p-2 text-sm 
                           bg-${event.label}-600 text-white
                           ${isDragging || isResizing ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
@@ -379,7 +395,7 @@ export default function WeekView() {
 
                     return (
                       <div
-                        key={task.id}
+                        key={task.TaskId || task.id}
                         className={`absolute left-[5px] right-[5px] h-9 rounded-lg p-2 text-white 
                           text-sm bg-${task.label}-600 border border-${task.label}-200 
                           ${isDragging ? 'shadow-lg opacity-90 z-30' : 'hover:shadow-md z-25'}

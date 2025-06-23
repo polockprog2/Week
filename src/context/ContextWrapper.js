@@ -23,9 +23,9 @@ function savedTasksReducer(state, { type, payload }) {
     case "push":
       return [...state, payload];
     case "update":
-      return state.map(task => task.id === payload.id ? payload : task);
+      return state.map(task => task.TaskId === payload.TaskId ? payload : task);
     case "delete":
-      return state.filter(task => task.id !== payload.id);
+      return state.filter(task => task.TaskId !== payload.TaskId);
     case "set":
       return payload;
     default:

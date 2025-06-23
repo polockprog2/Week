@@ -2,13 +2,9 @@ import dayjs from "dayjs";
 import React, { useContext, useState, useEffect } from "react";
 import GlobalContext from "../context/GlobalContext";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import { eventsApi } from "../services/api";
 
 // Extend dayjs with the isSameOrAfter plugin
 dayjs.extend(isSameOrAfter);
-
-const isTaskOnDay = (task, day) =>
-  dayjs(day).isBetween(task.CreatedAt, task.DueDate, null, '[]');
 
 export default function Day({ day, rowIdx, events, tasks, venues}) {
   const [dayEvents, setDayEvents] = useState([]);
@@ -61,32 +57,21 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
     setShowTaskModal(true);
   }
 
-  // When dropping an event on a new day
   function handleDrop(e) {
-    const droppedData = JSON.parse(e.dataTransfer.getData("text/plain"));
-    if (droppedData.type === "event") {
-      const updatedEvent = { ...droppedData, day: day.format("YYYY-MM-DD") };
-      // Use update, not push
-      dispatchCalEvent({ type: "update", payload: updatedEvent });
-      // Optionally, call your API to update the event in the backend
-      eventsApi.update(updatedEvent.EventId, updatedEvent);
-    } 
-    else if (droppedData.type === "task") { // if theres an issue need to check if task has a due date and fix it
-      droppedData.dueDate = day.format("YYYY-MM-DD");
-      dispatchCalTask({ type: "update", payload: droppedData });
+    e.preventDefault();
+    const eventData = JSON.parse(e.dataTransfer.getData("text/plain"));
+    if (eventData.type === "event") {
+      eventData.day = day.valueOf();
+      dispatchCalEvent({ type: "update", payload: eventData });
+    } else if (eventData.type === "task") {
+      eventData.dueDate = day.valueOf();
+      dispatchCalTask({ type: "update", payload: eventData });
     }
   }
 
   function handleDragOver(e) {
     e.preventDefault();
   }
-
-  const tasksForThisDay = tasks.filter(task => {
-    const start = dayjs(task.createdAt).startOf("day");
-    const end = dayjs(task.dueDate).endOf("day");
-    const current = dayjs(day).startOf("day");
-    return current.isBetween(start, end, null, "[]");
-  });
 
   return (
     <div
@@ -112,7 +97,7 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
           {/*Event*/}
           {dayEvents.map((evt, idx) => (
             <div
-              key={evt.id || idx}
+              key={evt.id}
               className={`bg-${evt.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
               onClick={(e) => handleEventClick(evt, e)}
               draggable
@@ -125,9 +110,9 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
           ))}
 
           {/* Tasks */}
-          {tasksForThisDay.map((task, idx) => (
+          {dayTasks.map((task, idx) => (
             <div
-              key={task.id || idx}
+              key={task.id}
               className={`bg-${task.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
               onClick={(e) => handleTaskClick(task, e)}
               draggable
@@ -141,10 +126,11 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
 
           {/* Venues */}
           <div className="flex-1">
-          {venues.map((venue, idx) => (
+          {venues.map((venue) => (
             <div
-              key={venue.id || `${venue.venueName}-${venue.title}-${idx}`}
+              key={venue.id || `${venue.title}-${venue.venueName}-${venue.day}`}
               className={`bg-${venue.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
+              //onClick={(e) => onVenueClick(venue, e)}
             >
               {venue.title} ({venue.venueName})
             </div>

@@ -33,18 +33,18 @@ export default function TaskModal() {
   const [title, setTitle] = useState(selectedTask?.title || "");
   const [description, setDescription] = useState(selectedTask?.description || "");
   const [dueDate, setDueDate] = useState(
-    selectedTask ? selectedTask.dueDate : daySelected.format("YYYY-MM-DD")
+    selectedTask?.dueDate
+      ? dayjs(selectedTask.dueDate).format("YYYY-MM-DDTHH:mm")
+      : daySelected
+        ? dayjs(daySelected).format("YYYY-MM-DDT12:00")
+        : dayjs().format("YYYY-MM-DDT12:00")
   );
-  const [priority, setPriority] = useState(
-    selectedTask ? selectedTask.priority : "medium"
-  );
-  const [status, setStatus] = useState(
-    selectedTask ? selectedTask.status : "pending"
-  );
-  const [selectedLabel, setSelectedLabel] = useState(
-    selectedTask ? selectedTask.label : "blue"
-  );
+  const [priority, setPriority] = useState(selectedTask?.priority || "medium");
+  const [status, setStatus] = useState(selectedTask?.status || "todo");
+  const [selectedLabel, setSelectedLabel] = useState(selectedTask?.label || "blue");
+  const [showDropdown, setShowDropdown] = useState(false);
 
+  // Ensure useEffect updates all fields when selectedTask changes
   useEffect(() => {
     setTitle(selectedTask?.title || "");
     setDescription(selectedTask?.description || "");
@@ -60,55 +60,62 @@ export default function TaskModal() {
     setSelectedLabel(selectedTask?.label || "blue");
   }, [selectedTask, daySelected]);
 
-  //console.log("selectedTask:", selectedTask);
-  
+  console.log("selectedTask:", selectedTask);
 // In handleSubmit, always include TaskId for updates
   async function handleSubmit(e) {
     e.preventDefault();
-   const isUpdate = !!selectedTask && !!selectedTask.taskId;
-  const taskId = selectedTask?.taskId;
-  const now = new Date().toISOString();
+    const isUpdate = !!selectedTask && !!selectedTask.TaskId;
+    const TaskId = selectedTask?.TaskId;
+    const now = new Date().toISOString();
 
-  const createdAtValue = selectedTask?.createdAt
-    ? selectedTask.createdAt
-    : daySelected
-      ? dayjs(daySelected).toISOString()
-      : new Date().toISOString();
+    const createdAtValue = selectedTask?.CreatedAt
+      ? selectedTask.CreatedAt
+      : daySelected
+        ? dayjs(daySelected).toISOString()
+        : new Date().toISOString();
 
     const task = {
-    ...(isUpdate && { taskId }),
+      ...(isUpdate && { TaskId }),
       title,
       description,
-    dueDate: safeDate(dueDate),
+      dueDate: safeDate(dueDate),
       priority,
       status,
       label: selectedLabel,
-    userId: 1,
-    createdAt: safeDate(createdAtValue),
-    updatedAt: now,
+      UserId: 1,
+      CreatedAt: safeDate(createdAtValue),
+      UpdatedAt: now,
     };
 
     try {
-      if (selectedTask) {
-        await tasksApi.update(selectedTask.id, task);
-        dispatchCalTask({ type: "update", payload: task });
+      let response;
+      if (isUpdate) {
+        response = await tasksApi.update(TaskId, task);
+        dispatchCalTask({ type: "update", payload: response.data });
       } else {
-        const response = await tasksApi.create(task);
-        dispatchCalTask({ type: "push", payload: response.data });
+        response = await tasksApi.create(task);
+        if (typeof response.data === "object") {
+          dispatchCalTask({ type: "push", payload: response.data });
+        }
       }
+      await fetchTasks(); // refresh from backend
       setShowTaskModal(false);
+      setSelectedTask(null);
     } catch (error) {
-      console.error("Error saving task:", error);
-      alert("Failed to save task. Please try again.");
+      alert("Error saving task. See console for details.");
+      console.error(error);
     }
   }
 
   async function handleDelete() {
-    if (selectedTask) {
+    let response;
+    const TaskId = selectedTask?.TaskId;
+    if (selectedTask && TaskId && window.confirm("Are you sure you want to delete this task?")) {
       try {
-        await tasksApi.delete(selectedTask.id);
-        dispatchCalTask({ type: "delete", payload: selectedTask });
+        response = await tasksApi.delete(TaskId);
+        dispatchCalTask({ type: "delete", payload: response.data  });
         setShowTaskModal(false);
+        setSelectedTask(null);
       } catch (error) {
         console.error("Error deleting task:", error);
         alert("Failed to delete task. Please try again.");
@@ -117,29 +124,27 @@ export default function TaskModal() {
   }
 
   const handleTypeChange = (type) => {
-    if (type === 'event') {
+    if (type === "event") {
       // Create an event object from current task data
       const eventData = {
         title,
         description,
         label: selectedLabel,
-        day: daySelected.valueOf(),
-        id: selectedTask ? selectedTask.id : Date.now(), // Preserve ID if converting existing task
-        startTime: dayjs(dueDate).format('HH:mm'),
-        endTime: dayjs(dueDate).add(30, 'minutes').format('HH:mm'),
-        startTimestamp: dayjs(dueDate).valueOf(),
-        endTimestamp: dayjs(dueDate).add(30, 'minutes').valueOf(),
+        day: dayjs(dueDate).format("YYYY-MM-DD"),
+        startTime: dayjs(dueDate).format("HH:mm"),
+        endTime: dayjs(dueDate).add(30, "minutes").format("HH:mm"),
+        userId: 1
       };
-      
-      // If converting an existing task, delete it first
-      if (selectedTask) {
-        dispatchCalTask({ type: "delete", payload: selectedTask });
+
+      // If converting an existing task, delete it first using TaskId
+      if (selectedTask && selectedTask.TaskId) {
+        dispatchCalTask({ type: "delete", payload: { TaskId: selectedTask.TaskId } });
       }
 
       // Add the new event
       dispatchCalEvent({ type: "push", payload: eventData });
-      
-      // Clear task data and set event data
+
+      // Set the new event as selected and open the event modal
       setSelectedTask(null);
       setShowTaskModal(false);
       setSelectedEvent(eventData);
@@ -158,6 +163,7 @@ export default function TaskModal() {
               <button
                 type="button"
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                onClick={() => setShowDropdown(!showDropdown)}
               >
                 <div className="flex items-center">
                   <span className="material-icons-outlined text-green-500 mr-2">task_alt</span>
@@ -165,22 +171,27 @@ export default function TaskModal() {
                   <span className="material-icons-outlined text-gray-400 ml-2">expand_more</span>
                 </div>
               </button>
-              <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 hidden group-hover:block w-48 py-1 z-50">
-                <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
-                  Switch to
-                </div>
-                <button
-                  type="button"
-                  className="w-full flex items-center px-3 py-2 hover:bg-gray-50 transition-colors duration-200"
-                  onClick={() => handleTypeChange('event')}
-                >
-                  <span className="material-icons-outlined text-blue-500 mr-3">event</span>
-                  <div className="text-left">
-                    <div className="text-gray-700 font-medium">Event</div>
-                    <div className="text-xs text-gray-500">Add to calendar with time slot</div>
+              {showDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 w-48 py-1 z-50">
+                  <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
+                    Switch to
                   </div>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    className="w-full flex items-center px-3 py-2 hover:bg-gray-50 transition-colors duration-200"
+                    onClick={() => {
+                      handleTypeChange("event");
+                      setShowDropdown(false);
+                    }}
+                  >
+                    <span className="material-icons-outlined text-blue-500 mr-3">event</span>
+                    <div className="text-left">
+                      <div className="text-gray-700 font-medium">Event</div>
+                      <div className="text-xs text-gray-500">Add to calendar with time slot</div>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-1">
@@ -194,7 +205,7 @@ export default function TaskModal() {
                 <span className="material-icons-outlined text-gray-600">delete</span>
               </button>
             )}
-            <button 
+            <button
               type="button"
               onClick={() => setShowTaskModal(false)}
               className="p-2 hover:bg-gray-200 rounded-full transition-colors duration-200"
@@ -224,13 +235,13 @@ export default function TaskModal() {
               <span className="text-gray-600">Due Date</span>
             </div>
             <div className="flex flex-col space-y-2">
-              <input
-                type="datetime-local"
-                name="dueDate"
-                value={dueDate}
-                className="px-2 py-1 border rounded text-gray-600"
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+            <input
+              type="datetime-local"
+              name="dueDate"
+              value={dueDate}
+              className="px-2 py-1 border rounded text-gray-600"
+              onChange={(e) => setDueDate(e.target.value)}
+            />
             </div>
 
             {/* Description section */}
@@ -259,13 +270,13 @@ export default function TaskModal() {
                   type="button"
                   onClick={() => setPriority(prClass)}
                   className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
-                    priority === prClass 
-                      ? `bg-${prClass}-100 text-${prClass}-800 border-2 border-${prClass}-600` 
-                      : 'bg-gray-50 text-gray-600 border-2 border-transparent hover:bg-gray-100'
+                    priority === prClass
+                      ? `bg-${prClass}-100 text-${prClass}-800 border-2 border-${prClass}-600`
+                      : "bg-gray-50 text-gray-600 border-2 border-transparent hover:bg-gray-100"
                   }`}
                 >
                   <span className="material-icons-outlined text-sm">
-                    {priority === prClass ? 'radio_button_checked' : 'radio_button_unchecked'}
+                    {priority === prClass ? "radio_button_checked" : "radio_button_unchecked"}
                   </span>
                   <span className="capitalize">{prClass}</span>
                 </button>
@@ -284,15 +295,15 @@ export default function TaskModal() {
                   type="button"
                   onClick={() => setStatus(stClass)}
                   className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
-                    status === stClass 
-                      ? `bg-${stClass}-100 text-${stClass}-800 border-2 border-${stClass}-600` 
-                      : 'bg-gray-50 text-gray-600 border-2 border-transparent hover:bg-gray-100'
+                    status === stClass
+                      ? `bg-${stClass}-100 text-${stClass}-800 border-2 border-${stClass}-600`
+                      : "bg-gray-50 text-gray-600 border-2 border-transparent hover:bg-gray-100"
                   }`}
                 >
                   <span className="material-icons-outlined text-sm">
-                    {status === stClass ? 'radio_button_checked' : 'radio_button_unchecked'}
+                    {status === stClass ? "radio_button_checked" : "radio_button_unchecked"}
                   </span>
-                  <span className="capitalize">{stClass.replace('-', ' ')}</span>
+                  <span className="capitalize">{stClass.replace("-", " ")}</span>
                 </button>
               ))}
             </div>
@@ -308,7 +319,7 @@ export default function TaskModal() {
                   key={i}
                   onClick={() => setSelectedLabel(lblClass)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
-                    selectedLabel === lblClass ? 'ring-2 ring-offset-2 ring-green-600' : ''
+                    selectedLabel === lblClass ? "ring-2 ring-offset-2 ring-green-600" : ""
                   } bg-${lblClass}-600`}
                 >
                   {selectedLabel === lblClass && (
