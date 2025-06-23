@@ -1,21 +1,21 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
-import { venuesApi } from "../services/api";
+import { venueBookingsApi } from "../services/api";
 import dayjs from "dayjs";
 
 export default function VenueModal() {
   const { dispatchCalVenue, setShowVenueModal, selectedVenue, savedVenues } = useContext(GlobalContext);
-  const [title, setTitle] = useState(selectedVenue.title);
+  const [title, setTitle] = useState(selectedVenue.title || "");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
   const isTimeSlotAvailable = () => {
-    const newStart = dayjs(startTime);
-    const newEnd = dayjs(endTime);
+    const newStart = dayjs(`${selectedVenue.day}T${startTime}`);
+    const newEnd = dayjs(`${selectedVenue.day}T${endTime}`);
     const overlapping = savedVenues.some(booking => {
       if (booking.venueId !== selectedVenue.venueId) return false;
-      const existingStart = dayjs(booking.startTime);
-      const existingEnd = dayjs(booking.endTime);
+      const existingStart = dayjs(booking.startTime || booking.StartTime);
+      const existingEnd = dayjs(booking.endTime || booking.EndTime);
       return (
         (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
         (newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
@@ -27,7 +27,6 @@ export default function VenueModal() {
       alert("This time slot is already booked for the selected venue.");
       return false;
     }
-
     return true;
   };
 
@@ -38,29 +37,29 @@ export default function VenueModal() {
       alert("Please enter a booking title");
       return;
     }
-
     if (!startTime || !endTime) {
       alert("Please select booking times");
       return;
     }
-
     if (!isTimeSlotAvailable()) {
       return;
     }
 
     const newBooking = {
-      id: Date.now(),
-      title,
-      startTime,
-      endTime,
-      venueId: selectedVenue.venueId,
-      venueName: selectedVenue.venueName,
-      day: selectedVenue.day,
+      title: title,
+      day: dayjs(selectedVenue.day).format("YYYY-MM-DD"),
+      startTime: dayjs(`${selectedVenue.day}T${startTime}`).toISOString(),
+      endTime: dayjs(`${selectedVenue.day}T${endTime}`).toISOString(),
+      venueId: Number(selectedVenue.venueId), // <-- ENSURE THIS IS A NUMBER
     };
 
     try {
-      const response = await venuesApi.createBooking(selectedVenue.venueId, newBooking);
-      dispatchCalVenue({ type: "push", payload: response.data });
+      console.log("Booking payload:", newBooking, typeof newBooking.venueId);
+      const result = await venueBookingsApi.create(newBooking);
+      console.log("Booking result:", result);
+      const response = await venueBookingsApi.getAll();
+      console.log("Fetched bookings after create:", response.data);
+      dispatchCalVenue({ type: "set", payload: response.data });
       setShowVenueModal(false);
     } catch (error) {
       console.error("Error creating venue booking:", error);
@@ -68,18 +67,7 @@ export default function VenueModal() {
     }
   };
 
-  const handleDelete = async () => {
-    if (selectedVenue.id) {
-      try {
-        await venuesApi.deleteBooking(selectedVenue.venueId, selectedVenue.id);
-        dispatchCalVenue({ type: "delete", payload: selectedVenue });
-        setShowVenueModal(false);
-      } catch (error) {
-        console.error("Error deleting venue booking:", error);
-        alert("Failed to delete booking. Please try again.");
-      }
-    }
-  };
+  console.log("selectedVenue:", selectedVenue);
 
   return (
     <div className="h-screen w-full fixed left-0 top-0 flex justify-center items-center">
@@ -88,7 +76,7 @@ export default function VenueModal() {
           <span className="material-icons-outlined text-gray-400">
             drag_handle
           </span>
-          <button onClick={() => setShowVenueModal(false)}>
+          <button type="button" onClick={() => setShowVenueModal(false)}>
             <span className="material-icons-outlined text-gray-400">close</span>
           </button>
         </header>
@@ -129,15 +117,6 @@ export default function VenueModal() {
           </div>
         </div>
         <footer className="flex justify-end border-t p-3 mt-5">
-          {selectedVenue.id && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded text-white mr-2"
-            >
-              Delete
-            </button>
-          )}
           <button
             type="button"
             onClick={() => setShowVenueModal(false)}

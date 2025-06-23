@@ -1,15 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import GlobalContext from '../context/GlobalContext';
 import VenueModal from './VenueModal';
-
-const venues = [
-  { id: 1, name: 'Conference Room A', capacity: 20, floor: '1st Floor' },
-  { id: 2, name: 'Meeting Room 1', capacity: 10, floor: '2nd Floor' },
-  { id: 3, name: 'Board Room', capacity: 15, floor: '3rd Floor' },
-  { id: 4, name: 'Training Room', capacity: 30, floor: '2nd Floor' },
-  { id: 5, name: 'Auditorium', capacity: 100, floor: 'Ground Floor' }
-];
+import { venuesApi } from '../services/api'; // <-- import the API
 
 export default function Venues() {
   const { 
@@ -20,10 +13,25 @@ export default function Venues() {
     showVenueModal,
   } = useContext(GlobalContext);
 
+  const [venues, setVenues] = useState([]);
+
+  // Fetch venues from backend
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const response = await venuesApi.getAll();
+        setVenues(response.data);
+      } catch (error) {
+        console.error("Failed to fetch venues", error);
+      }
+    };
+    fetchVenues();
+  }, []);
+
   // Get bookings for a specific venue on the selected day
   const getVenueBookings = (venueId) => {
     return savedVenues.filter(booking => 
-      booking.venueId === venueId.toString() && 
+      booking.venueId === venueId && 
       dayjs(booking.day).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD')
     );
   };
@@ -43,10 +51,10 @@ export default function Venues() {
   const handleBookVenue = (venue) => {
     setSelectedVenue({
       title: '',
-      day: daySelected.valueOf(),
-      venueId: venue.id.toString(),
-      venueName: venue.name,
-      capacity: venue.capacity,
+      day: daySelected.format("YYYY-MM-DD"),
+      venueId: venue.venueId,      // <-- camelCase
+      venueName: venue.name,       // <-- camelCase
+      capacity: venue.capacity,    // <-- camelCase
       label: 'green',
       type: 'venue-booking'
     });
@@ -64,14 +72,14 @@ export default function Venues() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
           {venues.map(venue => {
-            const bookings = getVenueBookings(venue.id);
+            const bookings = getVenueBookings(venue.venueId); // <-- camelCase
             const available = isVenueAvailable(bookings);
 
             return (
-              <div key={venue.id} 
+              <div key={venue.venueId} // <-- camelCase
                 className="border rounded-lg p-4 bg-blue-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start">
-                  <h3 className=" font-semibold text-gray-800">{venue.name}</h3>
+                  <h3 className="font-semibold text-gray-800">{venue.name}</h3>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       available ? 'bg-green-400 text-green-900' : 'bg-red-100 text-red-800'
@@ -99,7 +107,7 @@ export default function Venues() {
                       {bookings.map((booking, idx) => (
                         <div key={idx} 
                           className="text-xs font-semibold bg-green-50 p-2 rounded border border-gray-100">
-                          <div className="text-xsfont-medium">{booking.title}</div>
+                          <div className="text-xs font-medium">{booking.title}</div>
                           <div className="text-xs text-gray-500">
                             {dayjs(booking.startTime).format('HH:mm')} - 
                             {dayjs(booking.endTime).format('HH:mm')}

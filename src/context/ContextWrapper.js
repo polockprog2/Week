@@ -1,7 +1,7 @@
 import React, { useState, useReducer, useEffect, useMemo } from "react";
 import dayjs from "dayjs";
 import GlobalContext from "./GlobalContext";
-import { eventsApi, tasksApi, venuesApi } from "../services/api";
+import { eventsApi, tasksApi, venuesApi, venueBookingsApi } from "../services/api";
 
 function savedEventsReducer(state, { type, payload }) {
   switch (type) {
@@ -37,9 +37,9 @@ function savedVenuesReducer(state, { type, payload }) {
     case 'push':
       return [...state, payload];
     case 'update':
-      return state.map(venue => venue.id === payload.id ? payload : venue);
+      return state.map(venue => venue.VenueId === payload.VenueId ? payload : venue);
     case 'delete':
-      return state.filter(venue => venue.id !== payload.id);
+      return state.filter(venue => venue.VenueId !== payload.VenueId);
     case 'set':
       return payload;
     default:
@@ -102,6 +102,19 @@ export default function ContextWrapper(props) {
       }
     };
     fetchVenues();
+  }, []);
+  
+  // Fetch venue bookings from backend
+  useEffect(() => {
+    const fetchVenueBookings = async () => {
+      try {
+        const response = await venueBookingsApi.getAll();
+        dispatchCalVenue({ type: "set", payload: response.data });
+      } catch (error) {
+        console.error("Error fetching venue bookings:", error);
+      }
+    };
+    fetchVenueBookings();
   }, []);
   
   const filteredEvents = useMemo(() => {

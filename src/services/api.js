@@ -42,16 +42,16 @@ export const tasksApi = {
 export const venuesApi = {
     getAll: () => 
         api.get('/venues'),
-    getById: (id) => 
-        api.get(`/venues/${id}`),
-    getBookings: (id, date) => 
-        api.get(`/venues/${id}/bookings`, { params: { date } }),
-    createBooking: (id, booking) => 
-        api.post(`/venues/${id}/bookings`, booking),
-    updateBooking: (id, bookingId, booking) => 
-        api.put(`/venues/${id}/bookings/${bookingId}`, booking),
-    deleteBooking: (id, bookingId) => 
-        api.delete(`/venues/${id}/bookings/${bookingId}`),
+    create: (venue) => 
+        api.post('/venues', venue),
 };
 
-export default api; 
+export const venueBookingsApi = {
+    getAll: () => 
+        api.get('/venuebookings'),
+    create: (booking) => 
+        api.post('/venuebookings', booking),
+    // Add update/delete if you implement them in backend
+};
+
+export default api;
