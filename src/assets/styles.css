@@ -24,3 +24,44 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+.venue-status.active {
+  background-color: #f0f4f8; /* Lighter background for active state */
+  border-color: #cbd5e0; /* Lighter border for active state */
+}
+.venue-status.inactive {
+  background-color: #edf2f7; /* Lighter background for inactive state */
+  border-color: #e2e8f0; /* Lighter border for inactive state */
+}
+.venue-status.disabled {
+  background-color: #f7fafc; /* Lighter background for disabled state */
+  border-color: #e2e8f0; /* Lighter border for disabled state */
+  cursor: not-allowed;
+}
+.venue-status.active:hover {
+  background-color: #e2e8f0; /* Slightly darker on hover */
+}
+.venue-status.inactive:hover {
+  background-color: #edf2f7; /* Slightly darker on hover */
+}
+.venue-status.disabled:hover {
+  background-color: #f7fafc; /* No change on hover for disabled */
+}
+.venue-status.active:focus {
+  outline: 2px solid #63b3ed; /* Focus outline for accessibility */
+  outline-offset: 2px;
+}
+.venue-status.inactive:focus {
+  outline: 2px solid #63b3ed; /* Focus outline for accessibility */
+  outline-offset: 2px;
+}
+.venue-status.disabled:focus {
+  outline: 2px solid #e2e8f0; /* Focus outline for disabled */
+  outline-offset: 2px;
+}
+.venue-status.active:active {
+  background-color: #cbd5e0; /* Darker background on active click */
+}
+.venue-status.inactive:active {
+  background-color: #edf2f7; /* Darker background on active click */
+}

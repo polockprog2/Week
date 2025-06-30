@@ -3,13 +3,7 @@ import GlobalContext from "../context/GlobalContext";
 import { tasksApi } from "../services/api";
 import dayjs from "dayjs";
 
-// Always pass the full task object to setSelectedTask when clicking a task.
 
-function safeDate(date) {
-  const minDate = new Date("1753-01-01T00:00:00Z");
-  const d = new Date(date);
-  return isNaN(d.getTime()) || d < minDate ? minDate.toISOString() : d.toISOString();
-}
 
 const priorityClasses = ["low", "medium", "high"];
 const statusClasses = ["todo", "in-progress", "done"];
@@ -43,6 +37,7 @@ export default function TaskModal() {
   const [status, setStatus] = useState(selectedTask?.status || "todo");
   const [selectedLabel, setSelectedLabel] = useState(selectedTask?.label || "blue");
   const [showDropdown, setShowDropdown] = useState(false);
+ 
 
   // Ensure useEffect updates all fields when selectedTask changes
   useEffect(() => {
@@ -78,13 +73,13 @@ export default function TaskModal() {
       ...(isUpdate && { TaskId }),
       title,
       description,
-      dueDate: safeDate(dueDate),
+      dueDate: dayjs(dueDate).format("YYYY-MM-DDTHH:mm"), // <-- FIXED
       priority,
       status,
       label: selectedLabel,
       UserId: 1,
-      CreatedAt: safeDate(createdAtValue),
-      UpdatedAt: now,
+      CreatedAt: dayjs(createdAtValue).format("YYYY-MM-DDTHH:mm"),
+      UpdatedAt: dayjs(now).format("YYYY-MM-DDTHH:mm"),
     };
 
     try {
@@ -108,20 +103,20 @@ export default function TaskModal() {
   }
 
   async function handleDelete() {
-    let response;
-    const TaskId = selectedTask?.TaskId;
-    if (selectedTask && TaskId && window.confirm("Are you sure you want to delete this task?")) {
-      try {
-        response = await tasksApi.delete(TaskId);
-        dispatchCalTask({ type: "delete", payload: response.data  });
-        setShowTaskModal(false);
-        setSelectedTask(null);
-      } catch (error) {
-        console.error("Error deleting task:", error);
-        alert("Failed to delete task. Please try again.");
-      }
+  console.log("handleDelete called with selectedTask:", selectedTask);
+  if (selectedTask && selectedTask.taskId) {
+    try {
+      await tasksApi.delete(selectedTask.taskId);
+      dispatchCalTask({ type: "delete", payload: { taskId: selectedTask.taskId } }); // <-- FIXED
+      await fetchTasks();
+      setShowTaskModal(false);
+      setSelectedTask(null);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      alert("Failed to delete task. Please try again.");
     }
   }
+}
 
   const handleTypeChange = (type) => {
     if (type === "event") {

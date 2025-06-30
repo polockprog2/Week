@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import GlobalContext from '../context/GlobalContext';
 import VenueModal from './VenueModal';
+import '../assets/styles.css'; // <-- import your styles
 import { venuesApi } from '../services/api'; // <-- import the API
 
 export default function Venues() {

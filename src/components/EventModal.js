@@ -145,7 +145,7 @@ export default function EventModal() {
       try {
         await eventsApi.delete(selectedEvent.eventId);
         dispatchCalEvent({ type: "delete", payload: {eventId: selectedEvent.eventId} });
-    setShowEventModal(false);
+        setShowEventModal(false);
   }
       catch (error) {
         console.error("Error deleting event:", error);

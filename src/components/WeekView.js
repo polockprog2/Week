@@ -62,7 +62,6 @@ export default function WeekView() {
 
   const handleTimeSlotClick = useCallback((day, hour, minute = 0) => {
     if (viewMode !== 'week') return;
-    
     const selectedDateTime = day.hour(hour).minute(minute).second(0).millisecond(0);
     setDaySelected(selectedDateTime);
     setSelectedEvent(null);
@@ -70,25 +69,23 @@ export default function WeekView() {
   }, [setDaySelected, setSelectedEvent, setSelectedTask, viewMode]);
 
   const handleEventClick = useCallback((event, e) => {
-    e?.stopPropagation(); // Prevent time slot click
+    e?.stopPropagation();
     if (viewMode !== 'week') return;
-    if (draggedItem || resizingItem) return; // Don't open modal while dragging/resizing
-    
-    setSelectedEvent(event); // Set the selected event
-    setTimeout(() => setShowEventModal(true), 0); // Open the modal
+    if (draggedItem || resizingItem) return;
+    setSelectedEvent(event);
+    setTimeout(() => setShowEventModal(true), 0);
   }, [setSelectedEvent, setShowEventModal, draggedItem, resizingItem, viewMode]);
 
   const handleTaskClick = useCallback((task, e) => {
-    e?.stopPropagation(); // Prevent time slot click
+    e?.stopPropagation();
     if (viewMode !== 'week') return;
-    
-    setSelectedTask(task); // Set the selected task
-    setTimeout(() => setShowTaskModal(true), 1); // Open the modal
-  }, [setSelectedTask, setShowEventModal, viewMode]);
+    setSelectedTask(task);
+    setTimeout(() => setShowTaskModal(true), 0);
+  }, [setSelectedTask, setShowTaskModal, viewMode]);
 
   const getOverlappingEvents = useCallback((event, events) => {
     return events.filter(evt => {
-      if (evt.id === event.id) return false;
+      if ((evt.eventId || evt.EventId) === (event.eventId || event.EventId)) return false;
       const eventStart = dayjs(event.startTime || event.day);
       const eventEnd = dayjs(event.endTime || eventStart.add(1, 'hour'));
       const evtStart = dayjs(evt.startTime || evt.day);
@@ -103,18 +100,16 @@ export default function WeekView() {
     const startMinutes = startTime.hour() * 60 + startTime.minute();
     const endMinutes = endTime.hour() * 60 + endTime.minute();
     const durationMinutes = Math.max(endMinutes - startMinutes, 30);
-    
     const overlappingEvents = getOverlappingEvents(event, savedEvents.filter(evt => dayjs(evt.day).isSame(day, 'day')));
     const totalOverlapping = overlappingEvents.length + 1;
-    const position = overlappingEvents.findIndex(evt => evt.id < event.id) + 1;
+    const position = overlappingEvents.findIndex(evt => (evt.eventId || evt.EventId) < (event.eventId || event.EventId)) + 1;
     const width = totalOverlapping > 1 ? `${90 / totalOverlapping}%` : '90%';
-    
     return {
       top: `${startMinutes / 60 * 50}px`,
       height: `${durationMinutes / 60 * 50}px`,
       width,
       left: position ? `${(position * 95) / (overlappingEvents.length + 1)}%` : '2.5%',
-      zIndex: draggedItem?.id === event.id ? 30 : 20
+      zIndex: draggedItem && (draggedItem.eventId || draggedItem.EventId) === (event.eventId || event.EventId) ? 30 : 20
     };
   }, [savedEvents, draggedItem, getOverlappingEvents]);
 
@@ -133,16 +128,14 @@ export default function WeekView() {
   const getTaskStyle = useCallback((task, day) => {
     const dueTime = dayjs(task.dueDate);
     const minutes = dueTime.hour() * 60 + dueTime.minute();
-    
     return {
       top: `${(minutes / 60) * 50}px`,
-      zIndex: draggedItem?.id === task.id ? 30 : 25
+      zIndex: draggedItem && (draggedItem.taskId || draggedItem.TaskId) === (task.taskId || task.TaskId) ? 30 : 25
     };
   }, [draggedItem]);
 
   const handleDrag = useCallback((e) => {
     if (!draggedItem) return;
-    
     const gridRect = e.currentTarget.getBoundingClientRect();
     const y = Math.max(0, e.clientY - gridRect.top - dragOffset);
     const minutes = snapToGrid(Math.floor(y / 50 * 60));
@@ -169,26 +162,24 @@ export default function WeekView() {
         dueDate: dayjs(draggedItem.dueDate)
           .hour(hour)
           .minute(minute)
-          .format('YYYY-MM-DD HH:mm')
+          .format('YYYY-MM-DDTHH:mm')
       };
       setDraggedItem(updatedTask);
     }
   }, [draggedItem, draggedItemType, dragOffset, snapToGrid]);
 
-  // --- TASKS DRAG END FIX ---
-  // Update handleDragEnd to use TaskId for tasks (not id), and EventId for events (not id).
   const handleDragEnd = useCallback(() => {
     if (draggedItem) {
       if (draggedItemType === 'event') {
         dispatchCalEvent({ 
           type: "update", 
-          payload: { ...draggedItem, EventId: draggedItem.EventId || draggedItem.eventId }, // ensure correct key
+          payload: { ...draggedItem, eventId: draggedItem.eventId || draggedItem.EventId }, 
           itemType: draggedItemType 
         });
       } else if (draggedItemType === 'task') {
         dispatchCalTask({ 
           type: "update", 
-          payload: { ...draggedItem, TaskId: draggedItem.TaskId || draggedItem.id }, // ensure correct key
+          payload: { ...draggedItem, taskId: draggedItem.taskId || draggedItem.TaskId }, 
           itemType: draggedItemType 
         });
       }
@@ -197,7 +188,6 @@ export default function WeekView() {
     setDraggedItemType(null);
     setDragOffset(0);
   }, [draggedItem, draggedItemType, dispatchCalEvent, dispatchCalTask]);
-
 
   const handleResizeStart = useCallback((item, type, resizePos, e) => {
     e.stopPropagation();
@@ -208,7 +198,6 @@ export default function WeekView() {
 
   const handleResize = useCallback((e) => {
     if (!resizingItem) return;
-    
     const gridRect = e.currentTarget.getBoundingClientRect();
     const y = Math.max(0, e.clientY - gridRect.top);
     const minutes = snapToGrid(Math.floor(y));
@@ -230,7 +219,7 @@ export default function WeekView() {
         dueDate: dayjs(resizingItem.dueDate)
           .hour(hour)
           .minute(minute)
-          .format('YYYY-MM-DD HH:mm')
+          .format('YYYY-MM-DDTHH:mm')
       };
       setResizingItem(updatedTask);
     }
@@ -238,24 +227,32 @@ export default function WeekView() {
 
   const handleResizeEnd = useCallback(() => {
     if (resizingItem) {
-      dispatchCalEvent({ 
-        type: 'update', 
-        payload: resizingItem,
-        itemType: resizingItemType 
-      });
+      if (resizingItemType === 'event') {
+        dispatchCalEvent({ 
+          type: 'update', 
+          payload: { ...resizingItem, eventId: resizingItem.eventId || resizingItem.EventId },
+          itemType: resizingItemType 
+        });
+      } else if (resizingItemType === 'task') {
+        dispatchCalTask({ 
+          type: 'update', 
+          payload: { ...resizingItem, taskId: resizingItem.taskId || resizingItem.TaskId },
+          itemType: resizingItemType 
+        });
+      }
       setResizingItem(null);
       setResizingItemType(null);
       setResizeType(null);
     }
-  }, [resizingItem, resizingItemType, dispatchCalEvent]);
+  }, [resizingItem, resizingItemType, dispatchCalEvent, dispatchCalTask]);
 
   const isBeingDragged = (item) => {
     if (!draggedItem) return false;
     if (item.startTime && draggedItemType === 'event') {
-      return (draggedItem.EventId || draggedItem.eventId) === (item.EventId || item.eventId);
+      return (draggedItem.eventId || draggedItem.EventId) === (item.eventId || item.EventId);
     }
     if (item.dueDate && draggedItemType === 'task') {
-      return (draggedItem.TaskId || draggedItem.id) === (item.TaskId || item.id);
+      return (draggedItem.taskId || draggedItem.TaskId) === (item.taskId || item.TaskId);
     }
     return false;
   };
@@ -263,10 +260,10 @@ export default function WeekView() {
   const isBeingResized = (item) => {
     if (!resizingItem) return false;
     if (item.startTime && resizingItemType === 'event') {
-      return (resizingItem.EventId || resizingItem.eventId) === (item.EventId || item.eventId);
+      return (resizingItem.eventId || resizingItem.EventId) === (item.eventId || item.EventId);
     }
     if (item.dueDate && resizingItemType === 'task') {
-      return (resizingItem.TaskId || resizingItem.id) === (item.TaskId || item.id);
+      return (resizingItem.taskId || resizingItem.TaskId) === (item.taskId || item.TaskId);
     }
     return false;
   };
@@ -350,7 +347,7 @@ export default function WeekView() {
 
                     return (
                       <div
-                        key={event.EventId || event.eventId || event.id}
+                        key={event.eventId || event.EventId}
                         className={`absolute rounded-lg p-2 text-sm 
                           bg-${event.label}-600 text-white
                           ${isDragging || isResizing ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
@@ -395,7 +392,7 @@ export default function WeekView() {
 
                     return (
                       <div
-                        key={task.TaskId || task.id}
+                        key={task.taskId || task.TaskId}
                         className={`absolute left-[5px] right-[5px] h-9 rounded-lg p-2 text-white 
                           text-sm bg-${task.label}-600 border border-${task.label}-200 
                           ${isDragging ? 'shadow-lg opacity-90 z-30' : 'hover:shadow-md z-25'}
@@ -427,4 +424,3 @@ export default function WeekView() {
     </div>
   );
 }
-//Tasks drag end  need to be fixed

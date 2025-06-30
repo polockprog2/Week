@@ -7,6 +7,7 @@ import reportWebVitals from "./reportWebVitals";
 import ContextWrapper from "./context/ContextWrapper";
 import { BrowserRouter } from "react-router-dom";
 import isBetween from "dayjs/plugin/isBetween";
+import { UserProvider } from "./context/UserContext";
 dayjs.extend(isBetween);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -14,9 +15,11 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-    <ContextWrapper>
-      <App />
-    </ContextWrapper>
+    <UserProvider>
+      <ContextWrapper>
+        <App />
+      </ContextWrapper>
+    </UserProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

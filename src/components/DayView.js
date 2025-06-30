@@ -22,15 +22,22 @@ export default function DayView() {
   const [resizingEvent, setResizingEvent] = useState(null);
   const [resizeType, setResizeType] = useState(null); // 'start' or 'end'
 
-  // Filter events for current day with proper time comparison
+  // Fix: Include multi-day events that overlap with the selected day
   const dayEvents = useMemo(() => 
-    savedEvents.filter(event => 
-      dayjs(event.day).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD')
-    ).sort((a, b) => {
-      const aStart = dayjs(a.startTime || a.day);
-      const bStart = dayjs(b.startTime || b.day);
-      return aStart.diff(bStart);
-    }),
+    savedEvents
+      .filter(event => {
+        if (!event) return false; // skip null/undefined
+        const start = dayjs(event.day).startOf('day');
+        const end = dayjs(event.endDay || event.day).startOf('day');
+        const selected = daySelected.startOf('day');
+        return selected.isSame(start) || selected.isSame(end) || (selected.isAfter(start) && selected.isBefore(end));
+      })
+      .sort((a, b) => {
+        if (!a || !b) return 0;
+        const aStart = dayjs(a.startTime || a.day);
+        const bStart = dayjs(b.startTime || b.day);
+        return aStart.diff(bStart);
+      }),
     [savedEvents, daySelected]
   );
 
@@ -109,11 +116,20 @@ export default function DayView() {
 
   // Fixed event style calculation
   const getEventStyle = useCallback((event) => {
-    const startTime = dayjs(event.startTime || event.day);
-    const endTime = dayjs(event.endTime || startTime.add(1, 'hour'));
-    const startMinutes = Math.min(Math.max(startTime.hour() * 60 + startTime.minute(), 0), 1439);
-    const endMinutes = Math.min(Math.max(endTime.hour() * 60 + endTime.minute(), 0), 1439);
+    // Fix: For multi-day events, clamp start/end to the current day
+    const eventStart = dayjs(event.startTime || event.day);
+    const eventEnd = dayjs(event.endTime || event.day).isAfter(eventStart) ? dayjs(event.endTime || event.day) : eventStart.add(1, 'hour');
+    const dayStart = daySelected.startOf('day');
+    const dayEnd = daySelected.endOf('day');
+
+    // Clamp event times to the current day
+    const start = eventStart.isBefore(dayStart) ? dayStart : eventStart;
+    const end = eventEnd.isAfter(dayEnd) ? dayEnd : eventEnd;
+
+    const startMinutes = Math.min(Math.max(start.hour() * 60 + start.minute(), 0), 1439);
+    const endMinutes = Math.min(Math.max(end.hour() * 60 + end.minute(), 0), 1439);
     const durationMinutes = Math.max(endMinutes - startMinutes, 30);
+
     const overlappingEvents = getOverlappingEvents(event, dayEvents);
     const totalOverlapping = overlappingEvents.length + 1;
     const position = overlappingEvents.findIndex(evt => evt.id < event.id) + 1;
@@ -126,7 +142,7 @@ export default function DayView() {
       left: position ? `${(position * 95) / (overlappingEvents.length + 1)}%` : '2.5%',
       zIndex: draggedEvent?.id === event.id ? 30 : 20
     };
-  }, [dayEvents, draggedEvent, getOverlappingEvents]);
+  }, [dayEvents, draggedEvent, getOverlappingEvents, daySelected]);
 
   // Drag handlers
   const handleDragStart = useCallback((event, e) => {
@@ -152,7 +168,7 @@ export default function DayView() {
       endTime: daySelected
         .hour(Math.floor(minutes / 60))
         .minute(minutes % 60)
-        .add(dayjs(draggedEvent.endTime).diff(draggedEvent.startTime, 'minute'), 'minute')
+        .add(dayjs(draggedEvent.endTime).diff(dayjs(draggedEvent.startTime), 'minute'), 'minute')
         .format('YYYY-MM-DD HH:mm')
     };
     
