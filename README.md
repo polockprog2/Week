@@ -35,11 +35,11 @@ API: Custom REST API for events/tasks
 git clone <your-repo-url>
 cd <project-folder>
 ```
-Install dependencies:
-npm install
+# Install dependencies:
+> npm install
 
-Start the development server:
-npm start
+# Start the development server:
+> npm start
 
 Backend Setup:
 Ensure your REST API for events/tasks is running and accessible.
@@ -63,7 +63,7 @@ Ensure your REST API for events/tasks is running and accessible.
 1.Enter guest emails in the event modal.
 2.Guests are added to the event and can be managed from the guest list.
 
-Setting Reminders
+# Setting Reminders
 1.Choose a reminder time before the event (e.g., 10 minutes, 1 hour).
 
 **Component Overview**
@@ -81,10 +81,10 @@ Handles event creation and editing.
 ## Calendar.js
 ## Displays the calendar view and events.
 
-# GlobalContext.js
+## # GlobalContext.js
 Manages global state for events, tasks, and modal visibility.
 
-# eventsApi.js
+## # eventsApi.js
 Handles API requests for creating, updating, and deleting events.
 
 # API Reference
