@@ -1,17 +1,27 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
+import dayjs from "dayjs";
 import reportWebVitals from "./reportWebVitals";
 import ContextWrapper from "./context/ContextWrapper";
+import { BrowserRouter } from "react-router-dom";
+import isBetween from "dayjs/plugin/isBetween";
+import { UserProvider } from "./context/UserContext";
+dayjs.extend(isBetween);
 
-ReactDOM.render(
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(
   <React.StrictMode>
-    <ContextWrapper>
-      <App />
-    </ContextWrapper>
-  </React.StrictMode>,
-  document.getElementById("root")
+    <BrowserRouter>
+    <UserProvider>
+      <ContextWrapper>
+        <App />
+      </ContextWrapper>
+    </UserProvider>
+    </BrowserRouter>
+  </React.StrictMode>
 );
 
 reportWebVitals();

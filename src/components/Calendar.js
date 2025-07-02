@@ -10,8 +10,6 @@ export default function Day({ day, rowIdx }) {
     setDaySelected,
     setShowEventModal,
     filteredEvents,
-    setSelectedEvent,
-    setSelectedTask,
     multiDaySelection,
     setMultiDaySelection,
   } = useContext(GlobalContext);

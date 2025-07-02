@@ -11,7 +11,6 @@ export default function CalendarEvent({ event }) {
 
   function handleClick() {
     setSelectedEvent(event);
-    setSelectedTask(task);
     setShowEventModal(true);
   }
 

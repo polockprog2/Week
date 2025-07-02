@@ -87,6 +87,19 @@ export default function AgendaView() {
       ) : (
         <p className="text-gray-500 text-lg">No events or tasks for this month.</p>
       )}
+      <ul>
+        {Object.keys(groupedAgendaItems)
+          .filter(date => date.startsWith(currentMonth))
+          .map((date) => (
+            <li key={date}>
+              {groupedAgendaItems[date].map((item) => (
+                <div key={`${date}-${item.id}`}>
+                  <h3>{item.title}</h3>
+                </div>
+              ))}
+            </li>
+          ))}
+      </ul>
     </div>
   );
 }

@@ -1,16 +1,18 @@
 import React, { useState, useReducer, useEffect, useMemo } from "react";
 import dayjs from "dayjs";
 import GlobalContext from "./GlobalContext";
-
+import { eventsApi, tasksApi, venuesApi, venueBookingsApi } from "../services/api";
 
 function savedEventsReducer(state, { type, payload }) {
   switch (type) {
     case "push":
       return [...state, payload];
     case "update":
-      return state.map((evt) => (evt.id === payload.id ? payload : evt));
+      return state.map((evt) => (evt.eventId === payload.eventId ? payload : evt));
     case "delete":
-      return state.filter((evt) => evt.id !== payload.id);
+      return state.filter(event => event.eventId !== payload.eventId);
+    case "set":
+      return payload;
     default:
       throw new Error();
   }
@@ -21,11 +23,13 @@ function savedTasksReducer(state, { type, payload }) {
     case "push":
       return [...state, payload];
     case "update":
-      return state.map((task) => (task.id === payload.id ? payload : task));
+      return state.map(task => task.TaskId === payload.TaskId ? payload : task);
     case "delete":
-      return state.filter((task) => task.id !== payload.id);
+      return state.filter(task => task.TaskId !== payload.TaskId);
+    case "set":
+      return payload;
     default:
-      throw new Error();
+      throw new Error(`Unknown action type: ${type}`);
   }
 }
 function savedVenuesReducer(state, { type, payload }) {
@@ -33,28 +37,14 @@ function savedVenuesReducer(state, { type, payload }) {
     case 'push':
       return [...state, payload];
     case 'update':
-      return state.map(venue => venue.id === payload.id ? payload : venue);
+      return state.map(venue => venue.VenueId === payload.VenueId ? payload : venue);
     case 'delete':
-      return state.filter(venue => venue.id !== payload.id);
+      return state.filter(venue => venue.VenueId !== payload.VenueId);
+    case 'set':
+      return payload;
     default:
       throw new Error();
   }
-}
-
-function initEvents() {
-  const storageEvents = localStorage.getItem("savedEvents");
-  const parsedEvents = storageEvents ? JSON.parse(storageEvents) : [];
-  return parsedEvents;
-}
-
-function initTasks() {
-  const storageTasks = localStorage.getItem("savedTasks");
-  const parsedTasks = storageTasks ? JSON.parse(storageTasks) : [];
-  return parsedTasks;
-}
-function initVenues() {
-  const storageVenues = localStorage.getItem('savedVenues');
-  return storageVenues ? JSON.parse(storageVenues) : [];
 }
 
 export default function ContextWrapper(props) {
@@ -71,9 +61,61 @@ export default function ContextWrapper(props) {
   const [taskLabels, setTaskLabels] = useState([]);
   const [viewMode, setViewMode] = useState("month");
   const [multiDaySelection, setMultiDaySelection] = useState([]);
-  const [savedEvents, dispatchCalEvent] = useReducer(savedEventsReducer, [], initEvents);
-  const [savedTasks, dispatchCalTask] = useReducer(savedTasksReducer, [], initTasks);
-  const [savedVenues, dispatchCalVenue] = useReducer(savedVenuesReducer, [], initVenues);
+  const [savedEvents, dispatchCalEvent] = useReducer(savedEventsReducer, []);
+  const [savedTasks, dispatchCalTask] = useReducer(savedTasksReducer, []);
+  const [savedVenues, dispatchCalVenue] = useReducer(savedVenuesReducer, []);
+
+  // Fetch events from backend
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await eventsApi.getAll();
+        dispatchCalEvent({ type: "set", payload: response.data });
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  // Fetch tasks from backend
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await tasksApi.getAll();
+        dispatchCalTask({ type: "set", payload: response.data });
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  // Fetch venues from backend
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const response = await venuesApi.getAll();
+        dispatchCalVenue({ type: "set", payload: response.data });
+      } catch (error) {
+        console.error("Error fetching venues:", error);
+      }
+    };
+    fetchVenues();
+  }, []);
+  
+  // Fetch venue bookings from backend
+  useEffect(() => {
+    const fetchVenueBookings = async () => {
+      try {
+        const response = await venueBookingsApi.getAll();
+        dispatchCalVenue({ type: "set", payload: response.data });
+      } catch (error) {
+        console.error("Error fetching venue bookings:", error);
+      }
+    };
+    fetchVenueBookings();
+  }, []);
   
   const filteredEvents = useMemo(() => {
     return savedEvents.filter((evt) =>
@@ -98,18 +140,6 @@ export default function ContextWrapper(props) {
       dayjs(venue.day).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD')
     );
   }, [savedVenues, daySelected]);
-
-  useEffect(() => {
-    localStorage.setItem("savedEvents", JSON.stringify(savedEvents));
-  }, [savedEvents]);
-
-  useEffect(() => {
-    localStorage.setItem("savedTasks", JSON.stringify(savedTasks));
-  }, [savedTasks]);
-
-  useEffect(() => {
-    localStorage.setItem("savedVenues", JSON.stringify(savedVenues));
-  }, [savedVenues]);
 
   useEffect(() => {
     setLabels((prevLabels) => {
@@ -161,6 +191,16 @@ export default function ContextWrapper(props) {
     setTaskLabels(taskLabels.map((lbl) => (lbl.label === label.label ? label : lbl)));
   }
 
+  // Add fetchTasks to context for manual refresh
+  const fetchTasks = async () => {
+    try {
+      const response = await tasksApi.getAll();
+      dispatchCalTask({ type: "set", payload: response.data });
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
   return (
     <GlobalContext.Provider
       value={{
@@ -195,14 +235,13 @@ export default function ContextWrapper(props) {
         setLabels,
         taskLabels,
         setTaskLabels,
-        filteredEvents,
-        filteredTasks,
         viewMode,
         setViewMode,
         multiDaySelection,
         setMultiDaySelection,
         updateLabel,
-        updateTaskLabel
+        updateTaskLabel,
+        fetchTasks, // expose fetchTasks for modal refresh
       }}
     >
       {props.children}

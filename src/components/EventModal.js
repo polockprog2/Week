@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import GlobalContext from "../context/GlobalContext";
 import "../assets/styles.css";
 import dayjs from "dayjs";
+import { eventsApi } from "../services/api";
 
 
 const labelsClasses = [
@@ -67,10 +68,6 @@ export default function EventModal() {
     selectedEvent && selectedEvent.guests ? selectedEvent.guests : []
   );
 
-  const [isTimeEnabled, setIsTimeEnabled] = useState(
-    selectedEvent ? !!selectedEvent.startTime : false
-  );
-
   useEffect(() => {
     if (selectedEvent || selectedTask) {
       setTitle(selectedEvent ? selectedEvent.title : selectedTask.title);
@@ -93,87 +90,70 @@ export default function EventModal() {
     }
   }, [selectedEvent, selectedTask, multiDaySelection]);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    
-    // Validate required fields
-    if (!title.trim()) {
-      alert("Please enter a title");
-      return;
-    }
-    let startDateTime = 0;
-    let endDateTime = 0;
-
-    if (isTimeEnabled) {
-      if (!startTime || !endTime) {
-        alert("Please select start and end times");
-        return;
-      }
-
-      // Validate end time is after start time
-      startDateTime = dayjs(
-        `${selectedDay.format("YYYY-MM-DD")} ${startTime}`
-      );
-      if (endDay.isAfter(selectedDay, "day")) {
-        endDateTime = dayjs(`${endDay.format("YYYY-MM-DD")} ${endTime}`);
-      } else {
-        endDateTime = dayjs(`${selectedDay.format("YYYY-MM-DD")} ${endTime}`);
-      }
-
-      if (endDateTime.isBefore(startDateTime)) {
-        alert("End time must be after start time");
-        return;
-      }
-    }
-    
-    const calendarEvent = {
-      title: title.trim(),
-      description,
-      location,
-      email,
-      label: selectedLabel,
-      day: selectedDay.valueOf(),
-      endDay: endDay.valueOf(),
-      id: selectedEvent ? selectedEvent.id : Date.now(),
-      reminder,
-      startTime,
-      endTime,
-      startTimestamp: startDateTime.valueOf(),
-      endTimestamp: endDateTime.valueOf(),
-      guests,
-      lastUpdated: Date.now(),
-      isMultiDay: endDay.isAfter(selectedDay, 'day'),
-      views: ['month', 'week', 'day']
+    const isUpdate = !!selectedEvent;
+    const event = {
+      // Only include EventId if updating
+      ...(isUpdate ? { EventId: selectedEvent.EventId } : {}),
+      Title: title,
+      Description: description,
+      Location: location,
+      Email: email,
+      Label: selectedLabel,
+      Day: selectedDay.format("YYYY-MM-DD"),
+      EndDay: endDay.format("YYYY-MM-DD"),
+      Reminder: reminder,
+      StartTime: startTime,
+      EndTime: endTime,
+      LastUpdated: Date.now(),
+      IsMultiDay: endDay.isAfter(selectedDay, 'day'),
+      Views: JSON.stringify(['month', 'week', 'day']),
+      // Guests: guests.join(',') // Only if your backend supports this field
     };
 
-    if (selectedEvent) {
-      dispatchCalEvent({ 
-        type: "update", 
-        payload: calendarEvent
-      });
-    } else {
-      dispatchCalEvent({ 
-        type: "push", 
-        payload: calendarEvent
-      });
-    }
-
-    setShowEventModal(false);
-  }
-
-  function handleDelete() {
-    if (selectedEvent) {
-      // Delete from all views
-      dispatchCalEvent({
-        type: "delete",
-        payload: {
-          ...selectedEvent,
-          views: ['month', 'week', 'day'] // Mark that this event should be deleted from all views
+    try {
+      let response;
+      if (isUpdate) {
+        response = await eventsApi.update(selectedEvent.eventId, event);
+        dispatchCalEvent({ type: "update", payload: response.data });
+      } else {
+        response = await eventsApi.create(event);
+        if (typeof response.data === "object") {
+          dispatchCalEvent({ type: "push", payload: response.data });
         }
-      });
+        setShowEventModal(false);
+      }
       setShowEventModal(false);
+    } 
+    catch (error) {
+      if (error.response) {
+        alert(`Error: ${error.response.status} - ${error.response.data?.message || error.response.statusText}`);
+        console.error("Error data:", error.response.data);
+      } else if (error.request) {
+        alert("No response from server. Please check your backend.");
+        console.error("Error request:", error.request);
+      } else {
+        alert(`Error: ${error.message}`);
+        console.error("Error message:", error.message);
+      }
+      }
+    }
+    
+  async function handleDelete() {
+    if (selectedEvent) {
+      try {
+        await eventsApi.delete(selectedEvent.eventId);
+        dispatchCalEvent({ type: "delete", payload: {eventId: selectedEvent.eventId} });
+        setShowEventModal(false);
+  }
+      catch (error) {
+        console.error("Error deleting event:", error);
+        alert("Failed to delete event. Please try again.");
     }
   }
+  }
+
   function handleAddGuest(e) {
     e.preventDefault();
     if (email.trim() && !guests.includes(email.trim())) {
@@ -192,7 +172,6 @@ export default function EventModal() {
         dueDate: startTime ? dayjs(`${selectedDay.format('YYYY-MM-DD')} ${startTime}`).format('YYYY-MM-DD HH:mm') : selectedDay.format('YYYY-MM-DD HH:mm'),
         priority: 'medium',
         status: 'todo',
-        id: selectedEvent ? selectedEvent.id : Date.now(), // Preserve ID if converting existing event
         day: selectedDay.format("YYYY-MM-DD"),
       };
       
@@ -203,8 +182,6 @@ export default function EventModal() {
       // Add the new task
       dispatchCalTask({ type: "push", payload: taskData });
 
-      
-      
       // Clear event data and set task data
       setSelectedEvent(null);
       setShowEventModal(false);

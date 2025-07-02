@@ -126,11 +126,11 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
 
           {/* Venues */}
           <div className="flex-1">
-          {venues.map((venue, idx) => (
+          {venues.map((venue) => (
             <div
-              key={idx}
+              key={venue.id || `${venue.title}-${venue.venueName}-${venue.day}`}
               className={`bg-${venue.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
-              //onClick={(e) => onVenueClick(venue, e)} // Handle venue click
+              //onClick={(e) => onVenueClick(venue, e)}
             >
               {venue.title} ({venue.venueName})
             </div>
