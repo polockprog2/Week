@@ -1,43 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-export default function ProfilePopup({ isOpen, onClose }) {
-  const [isSignedIn, setIsSignedIn] = useState(false);
-
+export default function ProfilePopup({ isOpen, onClose, children }) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-0 mt-2 w-84 bg-gray-50 rounded-lg shadow-lg overflow-hidden z-50">
-      <div className="p-4">
-        {!isSignedIn ? (
-          <div className="flex flex-col items-center">
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              onClick={() => setIsSignedIn(true)} // Replace with real sign-in logic
-            >
-              Sign In
-            </button>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-xl font-semibold mb-4">Profile</h2>
-            <div className="flex items-center space-x-4">
-              <img
-                src="E:\\Week\\src\\assets\\OIP.jpg"
-                alt="Profile"
-                className="w-20 h-20 rounded-full"
-              />
-              <div>
-                <div className="text-lg font-semibold">Polock</div>
-                <div className="text-sm text-gray-500">samirislampolock18@gmail.com</div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Edit Profile
-              </button>
-            </div>
-          </>
-        )}
+    <div className="absolute right-0 mt-2 w-80 max-w-xs bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-200 animate-fadeIn">
+      <div className="p-5 relative">
+        <button
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 focus:outline-none"
+          aria-label="Close profile popup"
+          onClick={onClose}
+        >
+          <span className="material-icons-outlined">close</span>
+        </button>
+        {children}
       </div>
     </div>
   );
