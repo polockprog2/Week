@@ -1,52 +1,90 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import GlobalContext from "../context/GlobalContext";
-import "./ViewSwitcherDrodown.css"; 
+import "./ViewSwitcherDrodown.css";
+
+const viewOptions = [
+  { label: "Month", value: "month", icon: "calendar_month" },
+  { label: "Week", value: "week", icon: "view_week" },
+  { label: "Day", value: "day", icon: "calendar_today" },
+  { label: "Venues", value: "venues", icon: "location_on" },
+  { label: "Agenda", value: "agenda", icon: "list_alt" },
+  { label: "Year", value: "year", icon: "event" },
+];
 
 export default function ViewSwitcherDropdown() {
   const { viewMode, setViewMode } = useContext(GlobalContext);
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  // Keyboard navigation
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") setIsOpen(false);
+  };
+
+  const toggleDropdown = () => setIsOpen((open) => !open);
 
   const handleViewChange = (mode) => {
     setViewMode(mode.toLowerCase());
     setIsOpen(false);
   };
 
-  const viewOptions = [
-    { label: "Month", value: "month" },
-    { label: "Week", value: "week" },
-    { label: "Day", value: "day" },
-    { label: "Venues", value: "venues" },
-    {label : "Agenda", value: "agenda"},
-    { label: "Year", value: "year" },
-  ];
-
   return (
-    <div className="relative outlined">
+    <div className="relative outlined" ref={dropdownRef}>
       <button
         type="button"
-        className="bg-white-500 text-white-200 py-3 px-6 mr-5 hover:bg-gray-200 boder-gray-200 rounded-full shadow-md"
+        className="bg-white py-2 px-5 mr-5 flex items-center gap-2 border border-gray-200 rounded-full shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-label="Switch calendar view"
         onClick={toggleDropdown}
+        onKeyDown={handleKeyDown}
       >
-        <span className="text-gray-700">{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} View</span>
-        <span className="material-icons-outlined text-gray-600">
-          {isOpen ? 'expand_less' : 'expand_more'}
+        <span className="material-icons-outlined text-blue-500">
+          {viewOptions.find((o) => o.value === viewMode)?.icon || "calendar_view_month"}
+        </span>
+        <span className="text-gray-800 font-medium">
+          {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} View
+        </span>
+        <span className="material-icons-outlined text-gray-600 ml-1">
+          {isOpen ? "expand_less" : "expand_more"}
         </span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-40 bg-gray-100 font-semibold rounded-md shadow-lg z-50">
+        <div
+          className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200 animate-fadeIn"
+          role="listbox"
+          tabIndex={-1}
+        >
           {viewOptions.map((option) => (
             <button
               key={option.value}
-              className={`
-                w-full px-4 py-2 text-sm text-left hover:bg-gray-100
-                ${viewMode === option.value ? 'bg-gray-50 text-gray-600' : 'text-gray-700'}
+              className={`flex items-center gap-3 w-full px-4 py-2 text-sm text-left transition
+                ${viewMode === option.value
+                  ? "bg-blue-50 border-l-4 border-blue-500 text-blue-700 font-semibold"
+                  : "hover:bg-gray-100 text-gray-700"}
               `}
+              role="option"
+              aria-selected={viewMode === option.value}
+              tabIndex={0}
               onClick={() => handleViewChange(option.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") handleViewChange(option.value);
+              }}
             >
-              {option.label} View
+              <span className={`material-icons-outlined ${viewMode === option.value ? "text-blue-500" : "text-gray-500"}`}>{option.icon}</span>
+              <span>{option.label} View</span>
             </button>
           ))}
         </div>

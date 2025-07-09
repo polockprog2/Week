@@ -10,7 +10,6 @@ export default function DayView() {
     setShowEventModal, 
     setDaySelected,
     setSelectedEvent,
-    setSelectedTask,
     dispatchCalEvent,
     viewMode,
     setShowTaskModal,
@@ -22,18 +21,10 @@ export default function DayView() {
   const [resizingEvent, setResizingEvent] = useState(null);
   const [resizeType, setResizeType] = useState(null); // 'start' or 'end'
 
-  // Fix: Include multi-day events that overlap with the selected day
+  // Filter events for current day with proper time comparison
   const dayEvents = useMemo(() => 
-    savedEvents
-      .filter(event => {
-        if (!event) return false; // skip null/undefined
-        const start = dayjs(event.day).startOf('day');
-        const end = dayjs(event.endDay || event.day).startOf('day');
-        const selected = daySelected.startOf('day');
-        return selected.isSame(start) || selected.isSame(end) || (selected.isAfter(start) && selected.isBefore(end));
-      })
+    savedEvents.filter(event => event && dayjs(event.day).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD'))
       .sort((a, b) => {
-        if (!a || !b) return 0;
         const aStart = dayjs(a.startTime || a.day);
         const bStart = dayjs(b.startTime || b.day);
         return aStart.diff(bStart);
@@ -43,9 +34,7 @@ export default function DayView() {
 
   // Filter tasks for current day
   const dayTasks = useMemo(() => 
-    savedTasks.filter(task => 
-      dayjs(task.dueDate).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD')
-    ),
+    savedTasks.filter(task => task && dayjs(task.dueDate).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD')),
     [savedTasks, daySelected]
   );
 
@@ -74,12 +63,6 @@ export default function DayView() {
     // Then show the modal
     setTimeout(() => setShowEventModal(true), 0);
   }, [setSelectedEvent, setShowEventModal, draggedEvent, resizingEvent, viewMode]);
-
-  const handleTaskClick = (task, e) => {
-    e?.stopPropagation(); // Prevent other click handlers from triggering
-    setSelectedTask(task); // Set the selected task in the global context
-    setShowTaskModal(true); // Show the task modal
-  };
 
   // Update current time every minute
   useEffect(() => {
@@ -116,25 +99,16 @@ export default function DayView() {
 
   // Fixed event style calculation
   const getEventStyle = useCallback((event) => {
-    // Fix: For multi-day events, clamp start/end to the current day
-    const eventStart = dayjs(event.startTime || event.day);
-    const eventEnd = dayjs(event.endTime || event.day).isAfter(eventStart) ? dayjs(event.endTime || event.day) : eventStart.add(1, 'hour');
-    const dayStart = daySelected.startOf('day');
-    const dayEnd = daySelected.endOf('day');
-
-    // Clamp event times to the current day
-    const start = eventStart.isBefore(dayStart) ? dayStart : eventStart;
-    const end = eventEnd.isAfter(dayEnd) ? dayEnd : eventEnd;
-
-    const startMinutes = Math.min(Math.max(start.hour() * 60 + start.minute(), 0), 1439);
-    const endMinutes = Math.min(Math.max(end.hour() * 60 + end.minute(), 0), 1439);
+    if (!event) return {};
+    const startTime = dayjs(event.startTime || event.day);
+    const endTime = dayjs(event.endTime || startTime.add(1, 'hour'));
+    const startMinutes = Math.min(Math.max(startTime.hour() * 60 + startTime.minute(), 0), 1439);
+    const endMinutes = Math.min(Math.max(endTime.hour() * 60 + endTime.minute(), 0), 1439);
     const durationMinutes = Math.max(endMinutes - startMinutes, 30);
-
     const overlappingEvents = getOverlappingEvents(event, dayEvents);
     const totalOverlapping = overlappingEvents.length + 1;
     const position = overlappingEvents.findIndex(evt => evt.id < event.id) + 1;
     const width = totalOverlapping > 1 ? `${90 / totalOverlapping}%` : '90%';
-    
     return {
       top: `${startMinutes}px`,
       height: `${Math.max(durationMinutes, 30)}px`,
@@ -142,7 +116,7 @@ export default function DayView() {
       left: position ? `${(position * 95) / (overlappingEvents.length + 1)}%` : '2.5%',
       zIndex: draggedEvent?.id === event.id ? 30 : 20
     };
-  }, [dayEvents, draggedEvent, getOverlappingEvents, daySelected]);
+  }, [dayEvents, draggedEvent, getOverlappingEvents]);
 
   // Drag handlers
   const handleDragStart = useCallback((event, e) => {
@@ -168,7 +142,7 @@ export default function DayView() {
       endTime: daySelected
         .hour(Math.floor(minutes / 60))
         .minute(minutes % 60)
-        .add(dayjs(draggedEvent.endTime).diff(dayjs(draggedEvent.startTime), 'minute'), 'minute')
+        .add(dayjs(draggedEvent.endTime).diff(draggedEvent.startTime, 'minute'), 'minute')
         .format('YYYY-MM-DD HH:mm')
     };
     
@@ -216,23 +190,68 @@ export default function DayView() {
     }
   }, [resizingEvent, dispatchCalEvent]);
 
+  // Helper to group overlapping items (events or tasks)
+  function getOverlapGroups(items, getStart, getEnd) {
+    const sorted = [...items].sort((a, b) => getStart(a) - getStart(b));
+    const groups = [];
+    let group = [];
+    let lastEnd = null;
+    for (const item of sorted) {
+      const start = getStart(item);
+      const end = getEnd(item);
+      if (group.length === 0 || start < lastEnd) {
+        group.push(item);
+        lastEnd = Math.max(lastEnd || 0, end);
+      } else {
+        groups.push(group);
+        group = [item];
+        lastEnd = end;
+      }
+    }
+    if (group.length) groups.push(group);
+    return groups;
+  }
+
+  // Prepare all items (events + tasks) for overlap calculation
+  const allItems = [
+    ...dayEvents.filter(Boolean).map(e => ({ ...e, _type: 'event' })),
+    ...dayTasks.filter(Boolean).map(t => ({ ...t, _type: 'task' }))
+  ];
+  const getStart = item => item._type === 'event' ? dayjs(item.startTime || item.day).valueOf() : dayjs(item.dueDate).valueOf();
+  const getEnd = item => item._type === 'event' ? dayjs(item.endTime || item.day).valueOf() : dayjs(item.dueDate).add(30, 'minute').valueOf();
+  const overlapGroups = getOverlapGroups(allItems, getStart, getEnd);
+
+  // Map each item to its group and column
+  const itemPositions = new Map();
+  overlapGroups.forEach(group => {
+    group.forEach((item, idx) => {
+      itemPositions.set(item.id || item.eventId || item.taskId || item.TaskId, {
+        col: idx,
+        total: group.length
+      });
+    });
+  });
+
   return (
-    <div className="flex-1 h-screen overflow-y-auto">
-      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20">
+    <div className="flex-1 h-screen overflow-y-auto bg-gray-50">
+      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20 shadow-sm">
         <div className="flex items-center space-x-5 ml-12">
           <button 
             onClick={() => setDaySelected(daySelected.subtract(1, "day"))}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-blue-50 rounded-full transition-colors"
+            title="Previous Day"
           >
-            <span className="material-icons-outlined">chevron_left</span>
+            <span className="material-icons-outlined text-blue-500">chevron_left</span>
           </button>
           <button 
             onClick={() => setDaySelected(daySelected.add(1, "day"))}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-blue-50 rounded-full transition-colors"
+            title="Next Day"
           >
-            <span className="material-icons-outlined">chevron_right</span>
+            <span className="material-icons-outlined text-blue-500">chevron_right</span>
           </button>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
+            <span className="material-icons-outlined text-blue-400">calendar_today</span>
             {daySelected.format("dddd, MMMM D, YYYY")}
           </h2>
         </div>
@@ -242,7 +261,7 @@ export default function DayView() {
         {/* Time labels */}
         <div className="w-20 border-r bg-white sticky left-0 z-20">
           {hoursOfDay.map(hour => (
-            <div key={hour} className="h-[60px] border-t border-gray-200">
+            <div key={hour} className={`h-[60px] border-t border-gray-200 ${currentTime.hour() === hour && daySelected.isSame(currentTime, 'day') ? 'bg-blue-50' : ''}`}>
               <div className="text-xs text-gray-500 text-right pr-2 -mt-2.6">
                 {dayjs().hour(hour).format("h A")}
               </div>
@@ -252,7 +271,7 @@ export default function DayView() {
 
         {/* Time grid */}
         <div 
-          className="flex-1 relative bg-gray-100 overflow-hidden"
+          className="flex-1 relative bg-gray-50"
           onMouseMove={(e) => {
             handleDrag(e);
             handleResize(e);
@@ -275,7 +294,7 @@ export default function DayView() {
                   onClick={() => handleTimeSlotClick(hour, quarter)}
                   className={`absolute w-full border-t ${
                     quarter === 0 ? 'border-gray-200' : 'border-gray-100'
-                  } hover:bg-blue-70/30 text-lg text-white cursor-pointer transition-colors`}
+                  } hover:bg-blue-100/30 text-lg text-white cursor-pointer transition-colors`}
                   style={{ top: `${quarter}px` }}
                 />
               ))}
@@ -288,81 +307,98 @@ export default function DayView() {
               className="absolute w-full border-t-2 border-red-500 z-30 transition-all duration-500"
               style={{ top: getTimePosition(currentTime) }}
             >
-              <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full shadow-md" />
+              <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full shadow-md border-2 border-white" />
             </div>
           )}
 
-          {/* Events */}
-          {dayEvents.map(event => {
-            const isBeingDragged = draggedEvent?.id === event.id;
-            const isBeingResized = resizingEvent?.id === event.id;
-            const eventToRender = isBeingDragged ? draggedEvent : 
-                                isBeingResized ? resizingEvent : event;
-
+          {/* Events and Tasks: render all together, side by side if overlapping */}
+          {allItems.map(item => {
+            const isBeingDragged = draggedEvent?.id === (item.id || item.eventId || item.taskId || item.TaskId);
+            const isBeingResized = resizingEvent?.id === (item.id || item.eventId || item.taskId || item.TaskId);
+            const itemToRender = isBeingDragged ? draggedEvent : isBeingResized ? resizingEvent : item;
+            const pos = itemPositions.get(item.id || item.eventId || item.taskId || item.TaskId) || { col: 0, total: 1 };
+            const width = `${100 / pos.total}%`;
+            const left = `${(100 / pos.total) * pos.col}%`;
+            const top = item._type === 'event'
+              ? getTimePosition(dayjs(itemToRender.startTime || itemToRender.day))
+              : getTimePosition(dayjs(itemToRender.dueDate));
+            const height = item._type === 'event'
+              ? (() => {
+                  const start = dayjs(itemToRender.startTime || itemToRender.day);
+                  const end = dayjs(itemToRender.endTime || start.add(1, 'hour'));
+                  return `${Math.max(end.diff(start, 'minute'), 30)}px`;
+                })()
+              : '30px';
+            const borderColor = item._type === 'task' ? 'border-l-4 border-green-400' : 'border-l-4 border-blue-400';
+            const tooltip = item._type === 'event'
+              ? `${item.title}\n${dayjs(itemToRender.startTime || itemToRender.day).format('h:mm A')} - ${dayjs(itemToRender.endTime || itemToRender.day).format('h:mm A')}`
+              : `${item.title}\n${dayjs(itemToRender.dueDate).format('h:mm A')}`;
             return (
               <div
-                key={event.id}
-                className={`absolute rounded-lg p-2 text-sm text-white 
-                  bg-${event.label}-500 border border-${event.label}-500 
-                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
-                  transition-all cursor-move overflow-hidden`}
-                style={getEventStyle(eventToRender)}
-                onMouseDown={(e) => handleDragStart(event, e)}
-                onClick={() => !draggedEvent && !resizingEvent && handleEventClick(event)}
+                key={item.id || item.eventId || item.taskId || item.TaskId}
+                className={`absolute rounded-lg p-3 text-sm text-white shadow-md bg-${item.label}-500 border border-${item.label}-500 ${borderColor} ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-xl hover:bg-opacity-90'} transition-all cursor-move overflow-hidden flex items-center gap-2`}
+                style={{
+                  top,
+                  height,
+                  width,
+                  left,
+                  zIndex: isBeingDragged || isBeingResized ? 30 : 20
+                }}
+                title={tooltip}
+                onMouseDown={item._type === 'event' ? (e) => handleDragStart(item, e) : undefined}
+                onClick={() => !draggedEvent && !resizingEvent && handleEventClick(item)}
               >
-                {/* Resize handles */}
-                <div 
-                  className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                  onMouseDown={(e) => handleResizeStart(event, 'start', e)}
-                />
-                <div 
-                  className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                  onMouseDown={(e) => handleResizeStart(event, 'end', e)}
-                />
-                
-                <div className="flex items-center space-x-1 text-white">
-                  <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-white text-lg h-6 truncate">{event.title}</div>
-                    <div className="font-semibold text-xs text-white-900">
-                      {dayjs(event.startTime || event.day).format("h:mm A")} - 
-                      {dayjs(event.endTime || event.day).format("h:mm A")}
-                    </div>
-                    {event.location && (
-                      <div className="font-semibold text-lg text-white-600 truncate mt-1">
-                        📍 {event.location}
-                      </div>
-                    )}
+                {/* Resize handles for events and tasks */}
+                {item._type === 'event' && (
+                  <>
+                    <div 
+                      className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'start', e)}
+                    />
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'end', e)}
+                    />
+                  </>
+                )}
+                {item._type === 'task' && (
+                  <>
+                    <div 
+                      className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'start', e)}
+                    />
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'end', e)}
+                    />
+                  </>
+                )}
+                <span className={`material-icons-outlined text-lg mr-1 ${item._type === 'task' ? 'text-blue-400' : 'text-white-300'}`}>{item._type === 'task' ? 'check_circle' : 'event'}</span>
+                <div className="flex-1 min-w-0">
+                  <div className={`font-semibold text-base truncate ${item._type === 'task' ? 'text-white-400' : 'text-white'}`}>{item.title}</div>
+                  <div className="font-semibold text-xs text-white-900">
+                    {item._type === 'event'
+                      ? `${dayjs(itemToRender.startTime || itemToRender.day).format('h:mm A')} - ${dayjs(itemToRender.endTime || itemToRender.day).format('h:mm A')}`
+                      : dayjs(itemToRender.dueDate).format('h:mm A')}
                   </div>
+                  {item.location && (
+                    <div className={`font-semibold text-xs truncate mt-1 flex items-center gap-1 ${item._type === 'task' ? 'text-green-400' : 'text-blue-100'}`}>
+                      <span className={`material-icons-outlined text-base ${item._type === 'task' ? 'text-green-400' : 'text-blue-100'}`}>location_on</span>
+                      {item.location}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
 
-          {/* Tasks */}
-          {dayTasks.map(task => {
-            const isBeingDragged = draggedEvent?.id === task.id;
-            const isBeingResized = resizingEvent?.id === task.id;
-            const taskToRender = isBeingDragged ? draggedEvent : 
-                                isBeingResized ? resizingEvent : task;
-
-            return (
-              <div
-                key={task.id}
-                className={`absolute left-[2px] right-[2px] absolute rounded-lg p-2 text-sm text-white 
-                  bg-${task.label}-500 border border-${task.label}-500 
-                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
-                  transition-all cursor-move overflow-hidden`}
-                style={{
-                  top: getTimePosition(dayjs(task.dueDate)),
-                  zIndex: 25
-                }}
-                onClick={() => handleTaskClick(task)}
-              >
-                <div className="font-semibold text-lg text-white truncate">{task.title}</div>
-              </div>
-            );
-          })}
+          {/* No events or tasks message */}
+          {dayEvents.filter(Boolean).length === 0 && dayTasks.filter(Boolean).length === 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 pointer-events-none select-none">
+              <span className="material-icons-outlined text-6xl mb-2">event_busy</span>
+              <p className="text-lg">No events or tasks for this day.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

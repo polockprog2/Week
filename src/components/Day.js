@@ -6,7 +6,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 // Extend dayjs with the isSameOrAfter plugin
 dayjs.extend(isSameOrAfter);
 
-export default function Day({ day, rowIdx, events, tasks, venues}) {
+export default function Day({ day, rowIdx, events, tasks, venues }) {
   const [dayEvents, setDayEvents] = useState([]);
   const [dayTasks, setDayTasks] = useState([]);
   const dayVenues = venues.filter((venue) =>
@@ -34,9 +34,9 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
   }, [events, tasks, day]);
 
   function getCurrentDayClass() {
-    return day.format("DD-MM-YY") === dayjs().format("DD-MM-YY")
-      ? "bg-blue-600 text-white rounded-full w-7"
-      : "";
+    return day.isSame(dayjs(), 'day')
+      ? 'bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto font-bold shadow'
+      : 'text-gray-900';
   }
 
  
@@ -75,22 +75,23 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
 
   return (
     <div
-      className="border border-gray-200 flex flex-col relative min-h-[100px]"
+      className={`border border-gray-200 flex flex-col relative min-h-[100px] transition-colors duration-150 hover:bg-blue-50`}
       onClick={handleDayClick}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
       <header className="flex flex-col items-center relative z-20">
         {rowIdx === 0 && (
-          <p className="text-sm mt-1">
+          <p className="text-xs mt-1 text-gray-500 tracking-wide font-semibold select-none">
             {day.format("ddd").toUpperCase()}
           </p>
         )}
-        <p
-          className={`text-sm p-1 my-1 text-center ${getCurrentDayClass()}`}
-        >
-          {day.format("DD")}
-        </p>
+        <div className="flex items-center justify-center mt-1 mb-1">
+          <span className={`text-base ${getCurrentDayClass()}`}
+            style={{ minWidth: '2rem', minHeight: '2rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            {day.format("D")}
+          </span>
+        </div>
       </header>
       <div className="flex-1 cursor-pointer">
         <div>
@@ -112,12 +113,16 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
           {/* Tasks */}
           {dayTasks.map((task, idx) => (
             <div
-              key={task.id}
+              key={task.taskId}
               className={`bg-${task.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
               onClick={(e) => handleTaskClick(task, e)}
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", JSON.stringify({ ...task, type: "task" }));
+                // Always include taskId, not just ...task
+                e.dataTransfer.setData(
+                  "text/plain",
+                  JSON.stringify({ ...task, type: "task", taskId: task.taskId })
+                );
               }}
             >
               {task.title}

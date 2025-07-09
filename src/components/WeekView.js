@@ -289,24 +289,18 @@ export default function WeekView() {
             {startOfWeek.format("MMMM YYYY")}
           </h2>
         </div>
-        <button 
-          onClick={() => setStartOfWeek(dayjs().startOf("week"))}
-          className="px-4 py-2 bg-gray-600 font-semibold rounded-lg hover:bg-white"
-        >
-          Today
-        </button>
+        
       </header>
       
       <div className="flex border-b sticky top-16 bg-white z-10">
         <div className="w-20" /> {/* Time gutter */}
         {daysOfWeek.map(day => (
           <div key={day.format("YYYY-MM-DD")} className="flex-1 text-center py-2">
-            <div className="text-sm font-medium">{day.format("ddd")}</div>
-            <div className={`text-2xl font-bold ${
-              day.isSame(dayjs(), 'day') ? 'text-blue-600' : ''
-            }`}>
-              {day.format("D")}
+            <div className="text-sm font-medium flex items-center justify-center gap-1">
+              <span className="material-icons-outlined text-blue-400">calendar_today</span>
+              {day.format("ddd")}
             </div>
+            <div className={`text-2xl font-bold ${day.isSame(dayjs(), 'day') ? 'text-blue-600 bg-blue-50 rounded-full px-2 py-1' : ''}`}>{day.format("D")}</div>
           </div>
         ))}
       </div>
@@ -319,13 +313,13 @@ export default function WeekView() {
           ))}
         </div>
         {daysOfWeek.map(day => (
-          <div key={day.format("YYYY-MM-DD")} className="flex-1 relative">
+          <div key={day.format("YYYY-MM-DD")} className="flex-1 relative bg-gray-50">
             {day.isSame(dayjs(), 'day') && (
               <div 
                 className="absolute w-full border-t-2 border-red-500 z-10"
                 style={{ top: currentTimePosition }}
               >
-                <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full" />
+                <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white" />
               </div>
             )}
             {hoursOfDay.map(hour => (
@@ -335,7 +329,6 @@ export default function WeekView() {
                 onClick={() => handleTimeSlotClick(day, hour)}
               >
                 <div className="absolute w-full h-[1px] top-1/2 bg-gray-100" />
-
                 {/* Render Events */}
                 {savedEvents
                   .filter(evt => dayjs(evt.day).isSame(day, 'day') && dayjs(evt.day).hour() === hour)
@@ -348,7 +341,7 @@ export default function WeekView() {
                     return (
                       <div
                         key={event.eventId || event.EventId}
-                        className={`absolute rounded-lg p-2 text-sm 
+                        className={`absolute rounded-lg p-2 text-sm flex items-center gap-2
                           bg-${event.label}-600 text-white
                           ${isDragging || isResizing ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
                           transition-all cursor-move overflow-hidden`}
@@ -364,20 +357,19 @@ export default function WeekView() {
                           className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-black/10"
                           onMouseDown={(e) => handleResizeStart(event, 'event', 'end', e)}
                         />
-                        <div className="flex items-center space-x-1">
-                          <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-xs text-white truncate">{event.title}</div>
-                            <div className="text-xs text-white font-bold">
-                              {dayjs(event.startTime || event.day).format("h:mm A")} - 
-                              {dayjs(event.endTime || event.day).format("h:mm A")}
-                            </div>
-                            {event.location && (
-                              <div className="text-xs text-white font-bold truncate mt-1">
-                                📍 {event.location}
-                              </div>
-                            )}
+                        <span className="material-icons-outlined text-lg text-white/80 mr-1">event</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-xs text-white truncate">{event.title}</div>
+                          <div className="text-xs text-white font-bold">
+                            {dayjs(event.startTime || event.day).format("h:mm A")} - 
+                            {dayjs(event.endTime || event.day).format("h:mm A")}
                           </div>
+                          {event.location && (
+                            <div className="text-xs text-white font-bold truncate mt-1 flex items-center gap-1">
+                              <span className="material-icons-outlined text-white/70 text-base">location_on</span>
+                              {event.location}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -388,31 +380,45 @@ export default function WeekView() {
                   .filter(task => dayjs(task.dueDate).isSame(day, 'day') && dayjs(task.dueDate).hour() === hour)
                   .map(task => {
                     const isDragging = isBeingDragged(task);
-                    const taskToRender = isDragging ? draggedItem : task;
+                    const isResizing = isBeingResized(task);
+                    const taskToRender = isDragging ? draggedItem : isResizing ? resizingItem : task;
 
                     return (
                       <div
                         key={task.taskId || task.TaskId}
-                        className={`absolute left-[5px] right-[5px] h-9 rounded-lg p-2 text-white 
+                        className={`absolute left-[5px] right-[5px] h-9 rounded-lg p-2 text-white flex items-center gap-2
                           text-sm bg-${task.label}-600 border border-${task.label}-200 
-                          ${isDragging ? 'shadow-lg opacity-90 z-30' : 'hover:shadow-md z-25'}
+                          ${isDragging || isResizing ? 'shadow-lg opacity-90 z-30' : 'hover:shadow-md z-25'}
                           transition-all cursor-move`}
                         style={getTaskStyle(taskToRender, day)}
                         onMouseDown={(e) => handleDragStart(task, 'task', e)}
                         onClick={(e) => !draggedItem && handleTaskClick(task, e)}
                       >
-                        <div className="font-semibold truncate">
-                          <span className="mr-1">⚑</span>
-                          {task.title}
-                          <span className="ml-2 text-white text-xs text-gray-600">
+                        <span className="material-icons-outlined text-lg text-white/80 mr-1">check_circle</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-xs text-white truncate">{task.title}</div>
+                          <div className="text-xs text-white font-bold">
                             {dayjs(taskToRender.dueDate).format("h:mm A")}
-                          </span>
+                          </div>
+                          {task.location && (
+                            <div className="text-xs text-white font-bold truncate mt-1 flex items-center gap-1">
+                              <span className="material-icons-outlined text-white/70 text-base">location_on</span>
+                              {task.location}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
                   })}
               </div>
             ))}
+            {/* Empty state for the week */}
+            {hoursOfDay.length === 0 && savedEvents.length === 0 && savedTasks.length === 0 && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 pointer-events-none select-none">
+                <span className="material-icons-outlined text-6xl mb-2">event_busy</span>
+                <p className="text-lg">No events or tasks for this week.</p>
+              </div>
+            )}
           </div>
         ))}
       </div>
