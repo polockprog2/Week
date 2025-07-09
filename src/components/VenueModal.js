@@ -6,8 +6,9 @@ import dayjs from "dayjs";
 export default function VenueModal() {
   const { dispatchCalVenue, setShowVenueModal, selectedVenue, savedVenues } = useContext(GlobalContext);
   const [title, setTitle] = useState(selectedVenue.title || "");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [startTime, setStartTime] = useState(selectedVenue.startTime ? dayjs(selectedVenue.startTime).format("HH:mm") : "");
+  const [endTime, setEndTime] = useState(selectedVenue.endTime ? dayjs(selectedVenue.endTime).format("HH:mm") : "");
+  const [error, setError] = useState("");
 
   const isTimeSlotAvailable = () => {
     const newStart = dayjs(`${selectedVenue.day}T${startTime}`);
@@ -34,22 +35,28 @@ export default function VenueModal() {
     e.preventDefault();
 
     if (!title.trim()) {
-      alert("Please enter a booking title");
+      setError("Please enter a booking title");
       return;
     }
     if (!startTime || !endTime) {
-      alert("Please select booking times");
+      setError("Please select booking times");
+      return;
+    }
+    if (endTime <= startTime) {
+      setError("End time must be after start time");
       return;
     }
     if (!isTimeSlotAvailable()) {
+      setError("This time slot is already booked for the selected venue.");
       return;
     }
+    setError("");
 
     const newBooking = {
       title: title,
       day: dayjs(selectedVenue.day).format("YYYY-MM-DD"),
-      startTime: dayjs(`${selectedVenue.day}T${startTime}`).toISOString(),
-      endTime: dayjs(`${selectedVenue.day}T${endTime}`).toISOString(),
+      startTime: dayjs(`${selectedVenue.day}T${startTime}`).format("YYYY-MM-DDTHH:mm"),
+      endTime: dayjs(`${selectedVenue.day}T${endTime}`).format("YYYY-MM-DDTHH:mm"),
       venueId: Number(selectedVenue.venueId), // <-- ENSURE THIS IS A NUMBER
     };
 
@@ -70,8 +77,8 @@ export default function VenueModal() {
   console.log("selectedVenue:", selectedVenue);
 
   return (
-    <div className="h-screen w-full fixed left-0 top-0 flex justify-center items-center">
-      <form className="bg-white rounded-lg shadow-2xl w-1/4">
+    <div className="h-screen w-full fixed left-0 top-0 flex justify-center items-center bg-gray-900 bg-opacity-50 z-50">
+      <form className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-auto">
         <header className="bg-gray-100 px-4 py-2 flex justify-between items-center">
           <span className="material-icons-outlined text-gray-400">
             drag_handle
@@ -89,7 +96,7 @@ export default function VenueModal() {
               placeholder="Add booking title"
               value={title}
               required
-              className="pt-3 border-0 text-gray-600 text-xl font-semibold pb-2 w-80 border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
+              className="pt-3 border-0 text-gray-600 text-xl font-semibold pb-2 w-full border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
               onChange={(e) => setTitle(e.target.value)}
             />
             <span className="material-icons-outlined text-gray-400">
@@ -114,6 +121,9 @@ export default function VenueModal() {
                 className="pt-3 border-0 text-gray-600 pb-2 w-40 border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
               />
             </div>
+            {error && (
+              <div className="col-span-full text-red-500 text-sm mt-2">{error}</div>
+            )}
           </div>
         </div>
         <footer className="flex justify-end border-t p-3 mt-5">

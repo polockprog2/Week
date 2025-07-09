@@ -23,9 +23,9 @@ function savedTasksReducer(state, { type, payload }) {
     case "push":
       return [...state, payload];
     case "update":
-      return state.map(task => task.TaskId === payload.TaskId ? payload : task);
+      return state.map((task) => (task.taskId === payload.taskId ? payload : task));
     case "delete":
-      return state.filter(task => task.TaskId !== payload.TaskId);
+      return state.filter(task => task.taskId !== payload.taskId);
     case "set":
       return payload;
     default:
@@ -83,7 +83,11 @@ export default function ContextWrapper(props) {
     const fetchTasks = async () => {
       try {
         const response = await tasksApi.getAll();
-        dispatchCalTask({ type: "set", payload: response.data });
+        // Normalize taskId if needed
+        const tasks = (response.data || []).map(task =>
+          task.taskId ? task : { ...task, taskId: task.id }
+        );
+        dispatchCalTask({ type: "set", payload: tasks });
       } catch (error) {
         console.error("Error fetching tasks:", error);
       }

@@ -56,11 +56,11 @@ export default function TaskModal() {
   }, [selectedTask, daySelected]);
 
   console.log("selectedTask:", selectedTask);
-// In handleSubmit, always include TaskId for updates
+// In handleSubmit, always include taskId for updates
   async function handleSubmit(e) {
     e.preventDefault();
-    const isUpdate = !!selectedTask && !!selectedTask.TaskId;
-    const TaskId = selectedTask?.TaskId;
+    const isUpdate = !!selectedTask && !!selectedTask.taskId;
+    const taskId = selectedTask?.taskId;
     const now = new Date().toISOString();
 
     const createdAtValue = selectedTask?.CreatedAt
@@ -70,7 +70,7 @@ export default function TaskModal() {
         : new Date().toISOString();
 
     const task = {
-      ...(isUpdate && { TaskId }),
+      ...(isUpdate && { taskId }),
       title,
       description,
       dueDate: dayjs(dueDate).format("YYYY-MM-DDTHH:mm"), // <-- FIXED
@@ -85,7 +85,7 @@ export default function TaskModal() {
     try {
       let response;
       if (isUpdate) {
-        response = await tasksApi.update(TaskId, task);
+        response = await tasksApi.update(taskId, task);
         dispatchCalTask({ type: "update", payload: response.data });
       } else {
         response = await tasksApi.create(task);
@@ -131,9 +131,9 @@ export default function TaskModal() {
         userId: 1
       };
 
-      // If converting an existing task, delete it first using TaskId
-      if (selectedTask && selectedTask.TaskId) {
-        dispatchCalTask({ type: "delete", payload: { TaskId: selectedTask.TaskId } });
+      // If converting an existing task, delete it first using taskId
+      if (selectedTask && selectedTask.taskId) {
+        dispatchCalTask({ type: "delete", payload: { taskId: selectedTask.taskId } });
       }
 
       // Add the new event

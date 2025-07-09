@@ -112,12 +112,16 @@ export default function Day({ day, rowIdx, events, tasks, venues}) {
           {/* Tasks */}
           {dayTasks.map((task, idx) => (
             <div
-              key={task.id}
+              key={task.taskId}
               className={`bg-${task.label}-600 p-1 mx-1 text-white font-bold text-sm rounded mb-1 truncate`}
               onClick={(e) => handleTaskClick(task, e)}
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", JSON.stringify({ ...task, type: "task" }));
+                // Always include taskId, not just ...task
+                e.dataTransfer.setData(
+                  "text/plain",
+                  JSON.stringify({ ...task, type: "task", taskId: task.taskId })
+                );
               }}
             >
               {task.title}

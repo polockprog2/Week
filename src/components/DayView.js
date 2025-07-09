@@ -10,7 +10,6 @@ export default function DayView() {
     setShowEventModal, 
     setDaySelected,
     setSelectedEvent,
-    setSelectedTask,
     dispatchCalEvent,
     viewMode,
     setShowTaskModal,
@@ -22,18 +21,10 @@ export default function DayView() {
   const [resizingEvent, setResizingEvent] = useState(null);
   const [resizeType, setResizeType] = useState(null); // 'start' or 'end'
 
-  // Fix: Include multi-day events that overlap with the selected day
+  // Filter events for current day with proper time comparison
   const dayEvents = useMemo(() => 
-    savedEvents
-      .filter(event => {
-        if (!event) return false; // skip null/undefined
-        const start = dayjs(event.day).startOf('day');
-        const end = dayjs(event.endDay || event.day).startOf('day');
-        const selected = daySelected.startOf('day');
-        return selected.isSame(start) || selected.isSame(end) || (selected.isAfter(start) && selected.isBefore(end));
-      })
+    savedEvents.filter(event => event && dayjs(event.day).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD'))
       .sort((a, b) => {
-        if (!a || !b) return 0;
         const aStart = dayjs(a.startTime || a.day);
         const bStart = dayjs(b.startTime || b.day);
         return aStart.diff(bStart);
@@ -43,9 +34,7 @@ export default function DayView() {
 
   // Filter tasks for current day
   const dayTasks = useMemo(() => 
-    savedTasks.filter(task => 
-      dayjs(task.dueDate).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD')
-    ),
+    savedTasks.filter(task => task && dayjs(task.dueDate).format('YYYY-MM-DD') === daySelected.format('YYYY-MM-DD')),
     [savedTasks, daySelected]
   );
 
@@ -74,12 +63,6 @@ export default function DayView() {
     // Then show the modal
     setTimeout(() => setShowEventModal(true), 0);
   }, [setSelectedEvent, setShowEventModal, draggedEvent, resizingEvent, viewMode]);
-
-  const handleTaskClick = (task, e) => {
-    e?.stopPropagation(); // Prevent other click handlers from triggering
-    setSelectedTask(task); // Set the selected task in the global context
-    setShowTaskModal(true); // Show the task modal
-  };
 
   // Update current time every minute
   useEffect(() => {
@@ -116,25 +99,16 @@ export default function DayView() {
 
   // Fixed event style calculation
   const getEventStyle = useCallback((event) => {
-    // Fix: For multi-day events, clamp start/end to the current day
-    const eventStart = dayjs(event.startTime || event.day);
-    const eventEnd = dayjs(event.endTime || event.day).isAfter(eventStart) ? dayjs(event.endTime || event.day) : eventStart.add(1, 'hour');
-    const dayStart = daySelected.startOf('day');
-    const dayEnd = daySelected.endOf('day');
-
-    // Clamp event times to the current day
-    const start = eventStart.isBefore(dayStart) ? dayStart : eventStart;
-    const end = eventEnd.isAfter(dayEnd) ? dayEnd : eventEnd;
-
-    const startMinutes = Math.min(Math.max(start.hour() * 60 + start.minute(), 0), 1439);
-    const endMinutes = Math.min(Math.max(end.hour() * 60 + end.minute(), 0), 1439);
+    if (!event) return {};
+    const startTime = dayjs(event.startTime || event.day);
+    const endTime = dayjs(event.endTime || startTime.add(1, 'hour'));
+    const startMinutes = Math.min(Math.max(startTime.hour() * 60 + startTime.minute(), 0), 1439);
+    const endMinutes = Math.min(Math.max(endTime.hour() * 60 + endTime.minute(), 0), 1439);
     const durationMinutes = Math.max(endMinutes - startMinutes, 30);
-
     const overlappingEvents = getOverlappingEvents(event, dayEvents);
     const totalOverlapping = overlappingEvents.length + 1;
     const position = overlappingEvents.findIndex(evt => evt.id < event.id) + 1;
     const width = totalOverlapping > 1 ? `${90 / totalOverlapping}%` : '90%';
-    
     return {
       top: `${startMinutes}px`,
       height: `${Math.max(durationMinutes, 30)}px`,
@@ -142,7 +116,7 @@ export default function DayView() {
       left: position ? `${(position * 95) / (overlappingEvents.length + 1)}%` : '2.5%',
       zIndex: draggedEvent?.id === event.id ? 30 : 20
     };
-  }, [dayEvents, draggedEvent, getOverlappingEvents, daySelected]);
+  }, [dayEvents, draggedEvent, getOverlappingEvents]);
 
   // Drag handlers
   const handleDragStart = useCallback((event, e) => {
@@ -168,7 +142,7 @@ export default function DayView() {
       endTime: daySelected
         .hour(Math.floor(minutes / 60))
         .minute(minutes % 60)
-        .add(dayjs(draggedEvent.endTime).diff(dayjs(draggedEvent.startTime), 'minute'), 'minute')
+        .add(dayjs(draggedEvent.endTime).diff(draggedEvent.startTime, 'minute'), 'minute')
         .format('YYYY-MM-DD HH:mm')
     };
     
@@ -252,7 +226,7 @@ export default function DayView() {
 
         {/* Time grid */}
         <div 
-          className="flex-1 relative bg-gray-100 overflow-hidden"
+          className="flex-1 relative bg-gray-50"
           onMouseMove={(e) => {
             handleDrag(e);
             handleResize(e);
@@ -293,7 +267,7 @@ export default function DayView() {
           )}
 
           {/* Events */}
-          {dayEvents.map(event => {
+          {dayEvents.filter(Boolean).map(event => {
             const isBeingDragged = draggedEvent?.id === event.id;
             const isBeingResized = resizingEvent?.id === event.id;
             const eventToRender = isBeingDragged ? draggedEvent : 
@@ -340,7 +314,7 @@ export default function DayView() {
           })}
 
           {/* Tasks */}
-          {dayTasks.map(task => {
+          {dayTasks.filter(Boolean).map(task => {
             const isBeingDragged = draggedEvent?.id === task.id;
             const isBeingResized = resizingEvent?.id === task.id;
             const taskToRender = isBeingDragged ? draggedEvent : 
@@ -357,7 +331,7 @@ export default function DayView() {
                   top: getTimePosition(dayjs(task.dueDate)),
                   zIndex: 25
                 }}
-                onClick={() => handleTaskClick(task)}
+                onClick={() => handleEventClick(task)}
               >
                 <div className="font-semibold text-lg text-white truncate">{task.title}</div>
               </div>

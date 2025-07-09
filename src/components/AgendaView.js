@@ -19,7 +19,7 @@ export default function AgendaView() {
   const groupedAgendaItems = useMemo(() => {
     const events = savedEvents.map((event) => ({
       type: "event",
-      id: event.id,
+      id: event.eventId || event.id || `${event.title}-${event.day}`,
       title: event.title,
       time: event.startTime,
       day: dayjs(event.day).format("YYYY-MM-DD"),
@@ -28,9 +28,9 @@ export default function AgendaView() {
 
     const tasks = savedTasks.map((task) => ({
       type: "task",
-      id: task.id,
+      id: task.taskId || task.id || `${task.title}-${task.dueDate}`,
       title: task.title,
-      time: task.dueDate,
+      time: dayjs(task.dueDate).format("HH:mm"),
       day: dayjs(task.dueDate).format("YYYY-MM-DD"),
       label: task.label,
     }));
@@ -87,19 +87,7 @@ export default function AgendaView() {
       ) : (
         <p className="text-gray-500 text-lg">No events or tasks for this month.</p>
       )}
-      <ul>
-        {Object.keys(groupedAgendaItems)
-          .filter(date => date.startsWith(currentMonth))
-          .map((date) => (
-            <li key={date}>
-              {groupedAgendaItems[date].map((item) => (
-                <div key={`${date}-${item.id}`}>
-                  <h3>{item.title}</h3>
-                </div>
-              ))}
-            </li>
-          ))}
-      </ul>
+   
     </div>
   );
 }
