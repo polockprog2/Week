@@ -190,6 +190,48 @@ export default function DayView() {
     }
   }, [resizingEvent, dispatchCalEvent]);
 
+  // Helper to group overlapping items (events or tasks)
+  function getOverlapGroups(items, getStart, getEnd) {
+    const sorted = [...items].sort((a, b) => getStart(a) - getStart(b));
+    const groups = [];
+    let group = [];
+    let lastEnd = null;
+    for (const item of sorted) {
+      const start = getStart(item);
+      const end = getEnd(item);
+      if (group.length === 0 || start < lastEnd) {
+        group.push(item);
+        lastEnd = Math.max(lastEnd || 0, end);
+      } else {
+        groups.push(group);
+        group = [item];
+        lastEnd = end;
+      }
+    }
+    if (group.length) groups.push(group);
+    return groups;
+  }
+
+  // Prepare all items (events + tasks) for overlap calculation
+  const allItems = [
+    ...dayEvents.filter(Boolean).map(e => ({ ...e, _type: 'event' })),
+    ...dayTasks.filter(Boolean).map(t => ({ ...t, _type: 'task' }))
+  ];
+  const getStart = item => item._type === 'event' ? dayjs(item.startTime || item.day).valueOf() : dayjs(item.dueDate).valueOf();
+  const getEnd = item => item._type === 'event' ? dayjs(item.endTime || item.day).valueOf() : dayjs(item.dueDate).add(30, 'minute').valueOf();
+  const overlapGroups = getOverlapGroups(allItems, getStart, getEnd);
+
+  // Map each item to its group and column
+  const itemPositions = new Map();
+  overlapGroups.forEach(group => {
+    group.forEach((item, idx) => {
+      itemPositions.set(item.id || item.eventId || item.taskId || item.TaskId, {
+        col: idx,
+        total: group.length
+      });
+    });
+  });
+
   return (
     <div className="flex-1 h-screen overflow-y-auto bg-gray-50">
       <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20 shadow-sm">
@@ -269,102 +311,94 @@ export default function DayView() {
             </div>
           )}
 
-          {/* Events */}
+          {/* Events and Tasks: render all together, side by side if overlapping */}
+          {allItems.map(item => {
+            const isBeingDragged = draggedEvent?.id === (item.id || item.eventId || item.taskId || item.TaskId);
+            const isBeingResized = resizingEvent?.id === (item.id || item.eventId || item.taskId || item.TaskId);
+            const itemToRender = isBeingDragged ? draggedEvent : isBeingResized ? resizingEvent : item;
+            const pos = itemPositions.get(item.id || item.eventId || item.taskId || item.TaskId) || { col: 0, total: 1 };
+            const width = `${100 / pos.total}%`;
+            const left = `${(100 / pos.total) * pos.col}%`;
+            const top = item._type === 'event'
+              ? getTimePosition(dayjs(itemToRender.startTime || itemToRender.day))
+              : getTimePosition(dayjs(itemToRender.dueDate));
+            const height = item._type === 'event'
+              ? (() => {
+                  const start = dayjs(itemToRender.startTime || itemToRender.day);
+                  const end = dayjs(itemToRender.endTime || start.add(1, 'hour'));
+                  return `${Math.max(end.diff(start, 'minute'), 30)}px`;
+                })()
+              : '30px';
+            const borderColor = item._type === 'task' ? 'border-l-4 border-green-400' : 'border-l-4 border-blue-400';
+            const tooltip = item._type === 'event'
+              ? `${item.title}\n${dayjs(itemToRender.startTime || itemToRender.day).format('h:mm A')} - ${dayjs(itemToRender.endTime || itemToRender.day).format('h:mm A')}`
+              : `${item.title}\n${dayjs(itemToRender.dueDate).format('h:mm A')}`;
+            return (
+              <div
+                key={item.id || item.eventId || item.taskId || item.TaskId}
+                className={`absolute rounded-lg p-3 text-sm text-white shadow-md bg-${item.label}-500 border border-${item.label}-500 ${borderColor} ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-xl hover:bg-opacity-90'} transition-all cursor-move overflow-hidden flex items-center gap-2`}
+                style={{
+                  top,
+                  height,
+                  width,
+                  left,
+                  zIndex: isBeingDragged || isBeingResized ? 30 : 20
+                }}
+                title={tooltip}
+                onMouseDown={item._type === 'event' ? (e) => handleDragStart(item, e) : undefined}
+                onClick={() => !draggedEvent && !resizingEvent && handleEventClick(item)}
+              >
+                {/* Resize handles for events and tasks */}
+                {item._type === 'event' && (
+                  <>
+                    <div 
+                      className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'start', e)}
+                    />
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'end', e)}
+                    />
+                  </>
+                )}
+                {item._type === 'task' && (
+                  <>
+                    <div 
+                      className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'start', e)}
+                    />
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                      onMouseDown={(e) => handleResizeStart(item, 'end', e)}
+                    />
+                  </>
+                )}
+                <span className={`material-icons-outlined text-lg mr-1 ${item._type === 'task' ? 'text-blue-400' : 'text-white-300'}`}>{item._type === 'task' ? 'check_circle' : 'event'}</span>
+                <div className="flex-1 min-w-0">
+                  <div className={`font-semibold text-base truncate ${item._type === 'task' ? 'text-white-400' : 'text-white'}`}>{item.title}</div>
+                  <div className="font-semibold text-xs text-white-900">
+                    {item._type === 'event'
+                      ? `${dayjs(itemToRender.startTime || itemToRender.day).format('h:mm A')} - ${dayjs(itemToRender.endTime || itemToRender.day).format('h:mm A')}`
+                      : dayjs(itemToRender.dueDate).format('h:mm A')}
+                  </div>
+                  {item.location && (
+                    <div className={`font-semibold text-xs truncate mt-1 flex items-center gap-1 ${item._type === 'task' ? 'text-green-400' : 'text-blue-100'}`}>
+                      <span className={`material-icons-outlined text-base ${item._type === 'task' ? 'text-green-400' : 'text-blue-100'}`}>location_on</span>
+                      {item.location}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* No events or tasks message */}
           {dayEvents.filter(Boolean).length === 0 && dayTasks.filter(Boolean).length === 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 pointer-events-none select-none">
               <span className="material-icons-outlined text-6xl mb-2">event_busy</span>
               <p className="text-lg">No events or tasks for this day.</p>
             </div>
           )}
-          {dayEvents.filter(Boolean).map(event => {
-            const isBeingDragged = draggedEvent?.id === event.eventId;
-            const isBeingResized = resizingEvent?.id === event.eventId;
-            const eventToRender = isBeingDragged ? draggedEvent : 
-                                isBeingResized ? resizingEvent : event;
-
-            return (
-              <div
-                key={event.id}
-                className={`absolute rounded-lg p-3 text-sm text-white shadow-md
-                  bg-${event.label}-500 border border-${event.label}-500 
-                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-lg'}
-                  transition-all cursor-move overflow-hidden flex items-center gap-2`}
-                style={getEventStyle(eventToRender)}
-                onMouseDown={(e) => handleDragStart(event, e)}
-                onClick={() => !draggedEvent && !resizingEvent && handleEventClick(event)}
-              >
-                {/* Resize handles */}
-                <div 
-                  className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                  onMouseDown={(e) => handleResizeStart(event, 'start', e)}
-                />
-                <div 
-                  className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                  onMouseDown={(e) => handleResizeStart(event, 'end', e)}
-                />
-                <span className="material-icons-outlined text-lg text-white/80 mr-1">event</span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white text-base h-6 truncate">{event.title}</div>
-                  <div className="font-semibold text-xs text-white-900">
-                    {dayjs(event.startTime || event.day).format("h:mm A")} - 
-                    {dayjs(event.endTime || event.day).format("h:mm A")}
-                  </div>
-                  {event.location && (
-                    <div className="font-semibold text-xs text-white-200 truncate mt-1 flex items-center gap-1">
-                      <span className="material-icons-outlined text-white/70 text-base">location_on</span>
-                      {event.location}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Tasks */}
-          {dayTasks.filter(Boolean).map(task => {
-            const isBeingDragged = draggedEvent?.id === (task.id || task.TaskId);
-            const isBeingResized = resizingEvent?.id === (task.id || task.TaskId);
-            const taskToRender = isBeingDragged ? draggedEvent : 
-                                isBeingResized ? resizingEvent : task;
-
-            return (
-              <div
-                key={task.id || task.TaskId}
-                className={`absolute left-[2px] right-[2px] rounded-lg p-3 text-sm text-white shadow-md
-                  bg-${task.label}-500 border border-${task.label}-500 
-                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-lg'}
-                  transition-all cursor-move overflow-hidden flex items-center gap-2`}
-                style={{
-                  top: getTimePosition(dayjs(task.dueDate)),
-                  zIndex: 25
-                }}
-                onClick={() => handleEventClick(task)}
-              >
-                {/* Resize handles for tasks (optional, if you want parity with events) */}
-                <div 
-                  className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                  onMouseDown={(e) => handleResizeStart(task, 'start', e)}
-                />
-                <div 
-                  className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
-                  onMouseDown={(e) => handleResizeStart(task, 'end', e)}
-                />
-                <span className="material-icons-outlined text-lg text-white/80 mr-1">check_circle</span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white text-base truncate">{task.title}</div>
-                  <div className="font-semibold text-xs text-white-900">
-                    {dayjs(task.dueDate).format("h:mm A")}
-                  </div>
-                  {task.location && (
-                    <div className="font-semibold text-xs text-white-200 truncate mt-1 flex items-center gap-1">
-                      <span className="material-icons-outlined text-white/70 text-base">location_on</span>
-                      {task.location}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     </div>
