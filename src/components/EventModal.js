@@ -109,7 +109,7 @@ export default function EventModal() {
       LastUpdated: Date.now(),
       IsMultiDay: endDay.isAfter(selectedDay, 'day'),
       Views: JSON.stringify(['month', 'week', 'day']),
-      // Guests: guests.join(',') // Only if your backend supports this field
+      // Guests: guests.join(',') // Only if backend supports this field,after user confirmation
     };
 
     try {

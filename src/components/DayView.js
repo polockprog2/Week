@@ -191,22 +191,25 @@ export default function DayView() {
   }, [resizingEvent, dispatchCalEvent]);
 
   return (
-    <div className="flex-1 h-screen overflow-y-auto">
-      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20">
+    <div className="flex-1 h-screen overflow-y-auto bg-gray-50">
+      <header className="flex items-center justify-between px-4 py-2 border-b sticky top-0 bg-white z-20 shadow-sm">
         <div className="flex items-center space-x-5 ml-12">
           <button 
             onClick={() => setDaySelected(daySelected.subtract(1, "day"))}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-blue-50 rounded-full transition-colors"
+            title="Previous Day"
           >
-            <span className="material-icons-outlined">chevron_left</span>
+            <span className="material-icons-outlined text-blue-500">chevron_left</span>
           </button>
           <button 
             onClick={() => setDaySelected(daySelected.add(1, "day"))}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-blue-50 rounded-full transition-colors"
+            title="Next Day"
           >
-            <span className="material-icons-outlined">chevron_right</span>
+            <span className="material-icons-outlined text-blue-500">chevron_right</span>
           </button>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
+            <span className="material-icons-outlined text-blue-400">calendar_today</span>
             {daySelected.format("dddd, MMMM D, YYYY")}
           </h2>
         </div>
@@ -216,7 +219,7 @@ export default function DayView() {
         {/* Time labels */}
         <div className="w-20 border-r bg-white sticky left-0 z-20">
           {hoursOfDay.map(hour => (
-            <div key={hour} className="h-[60px] border-t border-gray-200">
+            <div key={hour} className={`h-[60px] border-t border-gray-200 ${currentTime.hour() === hour && daySelected.isSame(currentTime, 'day') ? 'bg-blue-50' : ''}`}>
               <div className="text-xs text-gray-500 text-right pr-2 -mt-2.6">
                 {dayjs().hour(hour).format("h A")}
               </div>
@@ -249,7 +252,7 @@ export default function DayView() {
                   onClick={() => handleTimeSlotClick(hour, quarter)}
                   className={`absolute w-full border-t ${
                     quarter === 0 ? 'border-gray-200' : 'border-gray-100'
-                  } hover:bg-blue-70/30 text-lg text-white cursor-pointer transition-colors`}
+                  } hover:bg-blue-100/30 text-lg text-white cursor-pointer transition-colors`}
                   style={{ top: `${quarter}px` }}
                 />
               ))}
@@ -262,24 +265,30 @@ export default function DayView() {
               className="absolute w-full border-t-2 border-red-500 z-30 transition-all duration-500"
               style={{ top: getTimePosition(currentTime) }}
             >
-              <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full shadow-md" />
+              <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full shadow-md border-2 border-white" />
             </div>
           )}
 
           {/* Events */}
+          {dayEvents.filter(Boolean).length === 0 && dayTasks.filter(Boolean).length === 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 pointer-events-none select-none">
+              <span className="material-icons-outlined text-6xl mb-2">event_busy</span>
+              <p className="text-lg">No events or tasks for this day.</p>
+            </div>
+          )}
           {dayEvents.filter(Boolean).map(event => {
-            const isBeingDragged = draggedEvent?.id === event.id;
-            const isBeingResized = resizingEvent?.id === event.id;
+            const isBeingDragged = draggedEvent?.id === event.eventId;
+            const isBeingResized = resizingEvent?.id === event.eventId;
             const eventToRender = isBeingDragged ? draggedEvent : 
                                 isBeingResized ? resizingEvent : event;
 
             return (
               <div
                 key={event.id}
-                className={`absolute rounded-lg p-2 text-sm text-white 
+                className={`absolute rounded-lg p-3 text-sm text-white shadow-md
                   bg-${event.label}-500 border border-${event.label}-500 
-                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
-                  transition-all cursor-move overflow-hidden`}
+                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-lg'}
+                  transition-all cursor-move overflow-hidden flex items-center gap-2`}
                 style={getEventStyle(eventToRender)}
                 onMouseDown={(e) => handleDragStart(event, e)}
                 onClick={() => !draggedEvent && !resizingEvent && handleEventClick(event)}
@@ -293,21 +302,19 @@ export default function DayView() {
                   className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
                   onMouseDown={(e) => handleResizeStart(event, 'end', e)}
                 />
-                
-                <div className="flex items-center space-x-1 text-white">
-                  <div className="w-1 h-full absolute left-0 top-0 bg-gray-400 opacity-50" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-white text-lg h-6 truncate">{event.title}</div>
-                    <div className="font-semibold text-xs text-white-900">
-                      {dayjs(event.startTime || event.day).format("h:mm A")} - 
-                      {dayjs(event.endTime || event.day).format("h:mm A")}
-                    </div>
-                    {event.location && (
-                      <div className="font-semibold text-lg text-white-600 truncate mt-1">
-                        📍 {event.location}
-                      </div>
-                    )}
+                <span className="material-icons-outlined text-lg text-white/80 mr-1">event</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-white text-base h-6 truncate">{event.title}</div>
+                  <div className="font-semibold text-xs text-white-900">
+                    {dayjs(event.startTime || event.day).format("h:mm A")} - 
+                    {dayjs(event.endTime || event.day).format("h:mm A")}
                   </div>
+                  {event.location && (
+                    <div className="font-semibold text-xs text-white-200 truncate mt-1 flex items-center gap-1">
+                      <span className="material-icons-outlined text-white/70 text-base">location_on</span>
+                      {event.location}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -315,25 +322,46 @@ export default function DayView() {
 
           {/* Tasks */}
           {dayTasks.filter(Boolean).map(task => {
-            const isBeingDragged = draggedEvent?.id === task.id;
-            const isBeingResized = resizingEvent?.id === task.id;
+            const isBeingDragged = draggedEvent?.id === (task.id || task.TaskId);
+            const isBeingResized = resizingEvent?.id === (task.id || task.TaskId);
             const taskToRender = isBeingDragged ? draggedEvent : 
                                 isBeingResized ? resizingEvent : task;
 
             return (
               <div
-                key={task.id}
-                className={`absolute left-[2px] right-[2px] absolute rounded-lg p-2 text-sm text-white 
+                key={task.id || task.TaskId}
+                className={`absolute left-[2px] right-[2px] rounded-lg p-3 text-sm text-white shadow-md
                   bg-${task.label}-500 border border-${task.label}-500 
-                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-md'}
-                  transition-all cursor-move overflow-hidden`}
+                  ${isBeingDragged || isBeingResized ? 'shadow-lg opacity-90' : 'hover:shadow-lg'}
+                  transition-all cursor-move overflow-hidden flex items-center gap-2`}
                 style={{
                   top: getTimePosition(dayjs(task.dueDate)),
                   zIndex: 25
                 }}
                 onClick={() => handleEventClick(task)}
               >
-                <div className="font-semibold text-lg text-white truncate">{task.title}</div>
+                {/* Resize handles for tasks (optional, if you want parity with events) */}
+                <div 
+                  className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                  onMouseDown={(e) => handleResizeStart(task, 'start', e)}
+                />
+                <div 
+                  className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200/50"
+                  onMouseDown={(e) => handleResizeStart(task, 'end', e)}
+                />
+                <span className="material-icons-outlined text-lg text-white/80 mr-1">check_circle</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-white text-base truncate">{task.title}</div>
+                  <div className="font-semibold text-xs text-white-900">
+                    {dayjs(task.dueDate).format("h:mm A")}
+                  </div>
+                  {task.location && (
+                    <div className="font-semibold text-xs text-white-200 truncate mt-1 flex items-center gap-1">
+                      <span className="material-icons-outlined text-white/70 text-base">location_on</span>
+                      {task.location}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
