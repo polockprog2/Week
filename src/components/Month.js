@@ -81,12 +81,47 @@ export default function Month({ month,venues }) {
     setSelectedVenue(venues);
     setTimeout(() => setShowVenueModal(true), 0);
   }, [setSelectedVenue, setShowVenueModal]);
+
+  // Helper to render multi-day selection bar
+  function renderMultiDayBar() {
+    if (selectedDays.length < 2) return null;
+    const selectedStrs = selectedDays.map(d => d.format('YYYY-MM-DD'));
+    return month.map((row, rowIdx) => {
+      // Find indices of selected days in this row
+      const indices = row
+        .map((day, idx) => selectedStrs.includes(day.format('YYYY-MM-DD')) ? idx : -1)
+        .filter(idx => idx !== -1);
+      if (indices.length === 0) return null;
+      const start = Math.min(...indices);
+      const end = Math.max(...indices);
+      return (
+        <div
+          key={rowIdx}
+          style={{
+            gridRow: rowIdx + 1,
+            gridColumnStart: start + 1,
+            gridColumnEnd: end + 2,
+            zIndex: 10,
+            pointerEvents: 'none',
+            position: 'absolute',
+            height: '12px',
+            top: `${rowIdx * 20 + 8}px`, // adjust as needed for vertical alignment
+            left: 0,
+            right: 0
+          }}
+          className="bg-blue-400 rounded-full opacity-60"
+        />
+      );
+    });
+  }
   return (
     <div
-      className="flex-1 grid grid-cols-7 grid-rows-5 border-rounded-md shadow-md"
+      className="flex-1 grid grid-cols-7 grid-rows-5 border-rounded-md shadow-md relative"
+      style={{ position: 'relative' }}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
+      {renderMultiDayBar()}
       {month.map((row, i) => (
         <React.Fragment key={i}>
           {row.map((day, idx) => {

@@ -54,4 +54,28 @@ export const venueBookingsApi = {
     // Add update/delete if you implement them in backend
 };
 
+// Users API
+export const usersApi = {
+    login: (credentials) =>
+        api.post('/Users/signin', {
+            Email: credentials.email,
+            PasswordHash: credentials.password
+        }),
+    register: (user) =>
+        api.post('/Users/register', {
+            Email: user.email,
+            PasswordHash: user.password,
+            Name: user.name,
+            ProfileImage: user.profileImage
+        }),
+    getProfile: () =>
+        api.get('/Users/profile'),
+    updateProfile: (profile) =>
+        api.put('/Users/profile', {
+            Name: profile.name,
+            ProfileImage: profile.profileImage
+        }),
+    logout: () =>
+        api.post('/Users/logout'),
+};
 export default api;

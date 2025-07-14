@@ -10,6 +10,8 @@ const labelsClasses = [
   "red",
   "teal",
   "cyan",
+  "orange",
+  
 ];
 
 
@@ -107,7 +109,7 @@ export default function EventModal() {
       StartTime: startTime,
       EndTime: endTime,
       LastUpdated: Date.now(),
-      IsMultiDay: endDay.isAfter(selectedDay, 'day'),
+      isMultiDay: selectedDay.length > 1,
       Views: JSON.stringify(['month', 'week', 'day']),
       // Guests: guests.join(',') // Only if backend supports this field,after user confirmation
     };
