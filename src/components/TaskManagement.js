@@ -38,6 +38,38 @@ export default function TaskManagement() {
 
   const { user } = useContext(UserContext);
 
+  // Quick add input state
+  const [quickTaskTitle, setQuickTaskTitle] = useState("");
+
+  // Helper for user initials
+  function getUserInitials(name) {
+    if (!name) return "?";
+    return name.split(" ").map(n => n[0]).join("").toUpperCase();
+  }
+
+  // Quick add handler
+  const handleQuickAdd = async (e) => {
+    e.preventDefault();
+    if (quickTaskTitle.trim()) {
+      try {
+        const newTask = {
+          title: quickTaskTitle.trim(),
+          description: '',
+          status: 'todo',
+          priority: 'medium',
+          label: 'gray',
+          dueDate: null,
+          userId: user?.userId || user?.id || null,
+        };
+        await tasksApi.create(newTask);
+        setQuickTaskTitle("");
+        await fetchTasks();
+      } catch (err) {
+        alert('Failed to add task. Please try again.');
+      }
+    }
+  };
+
   const [viewMode, setViewMode] = useState("kanban"); // kanban, list, calendar
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
@@ -195,25 +227,41 @@ export default function TaskManagement() {
   }, []);
 
   return (
-    <div className="h-full bg-gray-50 flex flex-col">
+    <div className="h-full w-full bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900">Task Management</h1>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">•</span>
-              <span className="text-sm text-gray-600">{filteredTasks.length} tasks</span>
+      <div className="w-full bg-gradient-to-r from-blue-50 via-white to-blue-50 border-b border-gray-200 py-7 animate-fade-in">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Task Management</h1>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">•</span>
+                <span className="text-sm text-gray-600">{filteredTasks.length} tasks</span>
+              </div>
             </div>
+            {/* New Task Button Only */}
+            <button
+              onClick={handleCreateTask}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ml-0 md:ml-6"
+              title="Create a new task (Ctrl+N)"
+              aria-label="Create a new task"
+            >
+              <span className="material-icons-outlined text-sm" title="Add">add</span>
+              <span>New Task</span>
+              <span className="text-xs opacity-75">(Ctrl+N)</span>
+            </button>
           </div>
-          <button
-            onClick={handleCreateTask}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <span className="material-icons-outlined text-sm">add</span>
-            <span>New Task</span>
-            <span className="text-xs opacity-75">(Ctrl+N)</span>
-          </button>
+          {/* Welcome and Avatar */}
+          <div className="flex items-center space-x-3 mt-4 md:mt-0">
+            <span className="text-gray-700 text-sm hidden sm:inline">Welcome, {user?.name ? user.name : user?.username ? user.username : "User"}!</span>
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="User avatar" className="w-10 h-10 rounded-full border border-gray-300 shadow-sm" />
+            ) : (
+              <span className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-200 text-blue-800 font-bold text-lg border border-blue-300 shadow-sm">
+                {getUserInitials(user?.name || user?.username)}
+              </span>
+            )}
+          </div>
         </div>
         
         {/* Task Statistics */}
@@ -265,6 +313,8 @@ export default function TaskManagement() {
                   ? "bg-white text-gray-900 shadow-sm" 
                   : "text-gray-600 hover:text-gray-900"
               }`}
+              title="Kanban View"
+              aria-label="Kanban View"
             >
               Kanban
             </button>
@@ -275,6 +325,8 @@ export default function TaskManagement() {
                   ? "bg-white text-gray-900 shadow-sm" 
                   : "text-gray-600 hover:text-gray-900"
               }`}
+              title="List View"
+              aria-label="List View"
             >
               List
             </button>
@@ -334,8 +386,10 @@ export default function TaskManagement() {
                   ? "bg-red-100 text-red-800 border-red-200"
                   : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200"
               }`}
+              title="Show only overdue tasks"
+              aria-label="Show only overdue tasks"
             >
-              <span className="material-icons-outlined text-sm mr-1">warning</span>
+              <span className="material-icons-outlined text-sm mr-1" title="Overdue">warning</span>
               Overdue Only
             </button>
           </div>
@@ -397,7 +451,7 @@ function KanbanView({ kanbanTasks, onEditTask, onStatusChange, onDragStart, onDr
                     {kanbanTasks[status]?.length || 0}
                   </span>
                 </div>
-                <span className="material-icons-outlined text-gray-400 text-sm">
+                <span className="material-icons-outlined text-gray-400 text-sm" title={config.title + ' column icon'} aria-label={config.title + ' column icon'}>
                   {config.icon}
                 </span>
               </div>
@@ -445,72 +499,84 @@ function ListView({ tasks, onEditTask, onStatusChange }) {
         </div>
 
         {/* Task Rows */}
-        {tasks.map((task) => (
-          <div
-            key={task.taskId}
-            className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors"
-          >
-            <div className="col-span-4">
-              <div className="flex items-start space-x-3">
-                <button
-                  onClick={() => onStatusChange(task, task.status === "done" ? "todo" : "done")}
-                  className="mt-1"
-                >
-                  <span className={`material-icons-outlined text-lg ${
-                    task.status === "done" ? "text-green-600" : "text-gray-400"
-                  }`}>
-                    {task.status === "done" ? "check_circle" : "radio_button_unchecked"}
-                  </span>
-                </button>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-900 truncate">{task.title}</h4>
-                  {task.description && (
-                    <p className="text-sm text-gray-500 truncate mt-1">{task.description}</p>
-                  )}
+        {tasks.map((task) => {
+          const isOverdue = task.dueDate && dayjs(task.dueDate).isBefore(dayjs(), 'day');
+          const isDueToday = task.dueDate && dayjs(task.dueDate).isSame(dayjs(), 'day');
+          return (
+            <div
+              key={task.taskId}
+              className={`grid grid-cols-12 gap-4 px-6 py-4 border-b transition-colors relative
+                ${isOverdue ? 'border-red-400 bg-red-50 animate-pulse' : isDueToday ? 'border-yellow-400 bg-yellow-50' : 'border-gray-100 hover:bg-gray-50'}
+              `}
+            >
+              {/* Overdue/Today Badge */}
+              {isOverdue && (
+                <span className="absolute top-2 right-20 bg-red-500 text-white text-xs px-2 py-0.5 rounded shadow" title="Overdue">Overdue</span>
+              )}
+              {isDueToday && !isOverdue && (
+                <span className="absolute top-2 right-20 bg-yellow-400 text-white text-xs px-2 py-0.5 rounded shadow" title="Due Today">Today</span>
+              )}
+              <div className="col-span-4">
+                <div className="flex items-start space-x-3">
+                  <button
+                    onClick={() => onStatusChange(task, task.status === "done" ? "todo" : "done")}
+                    className="mt-1"
+                    title={task.status === 'done' ? 'Mark as To Do' : 'Mark as Done'}
+                    aria-label={task.status === 'done' ? 'Mark as To Do' : 'Mark as Done'}
+                  >
+                    <span className={`material-icons-outlined text-lg ${
+                      task.status === "done" ? "text-green-600" : "text-gray-400"
+                    }`} title={task.status === 'done' ? 'Done' : 'To Do'}>
+                      {task.status === "done" ? "check_circle" : "radio_button_unchecked"}
+                    </span>
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 truncate">{task.title}</h4>
+                    {task.description && (
+                      <p className="text-sm text-gray-500 truncate mt-1">{task.description}</p>
+                    )}
+                  </div>
                 </div>
               </div>
+              <div className="col-span-2">
+                <select
+                  value={task.status}
+                  onChange={(e) => onStatusChange(task, e.target.value)}
+                  className={`px-2 py-1 rounded text-xs font-medium border ${statusColors[task.status]}`}
+                >
+                  <option value="todo">To Do</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="done">Done</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <span className={`px-2 py-1 rounded text-xs font-medium border ${priorityColors[task.priority]}`}>
+                  {task.priority}
+                </span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-sm text-gray-600">
+                  {task.dueDate ? dayjs(task.dueDate).format("MMM D, YYYY") : "No due date"}
+                </span>
+              </div>
+              <div className="col-span-1">
+                {task.label && (
+                  <div className={`w-4 h-4 rounded-full ${labelColors[task.label]}`}></div>
+                )}
+              </div>
+              <div className="col-span-1">
+                <button
+                  onClick={() => onEditTask(task)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Edit Task"
+                  aria-label="Edit Task"
+                >
+                  <span className="material-icons-outlined text-sm" title="Edit">edit</span>
+                </button>
+              </div>
             </div>
-            
-            <div className="col-span-2">
-              <select
-                value={task.status}
-                onChange={(e) => onStatusChange(task, e.target.value)}
-                className={`px-2 py-1 rounded text-xs font-medium border ${statusColors[task.status]}`}
-              >
-                <option value="todo">To Do</option>
-                <option value="in-progress">In Progress</option>
-                <option value="done">Done</option>
-              </select>
-            </div>
-            
-            <div className="col-span-2">
-              <span className={`px-2 py-1 rounded text-xs font-medium border ${priorityColors[task.priority]}`}>
-                {task.priority}
-              </span>
-            </div>
-            
-            <div className="col-span-2">
-              <span className="text-sm text-gray-600">
-                {task.dueDate ? dayjs(task.dueDate).format("MMM D, YYYY") : "No due date"}
-              </span>
-            </div>
-            
-            <div className="col-span-1">
-              {task.label && (
-                <div className={`w-4 h-4 rounded-full ${labelColors[task.label]}`}></div>
-              )}
-            </div>
-            
-            <div className="col-span-1">
-              <button
-                onClick={() => onEditTask(task)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <span className="material-icons-outlined text-sm">edit</span>
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {tasks.length === 0 && (
           <div className="text-center py-12 text-gray-400">
@@ -533,10 +599,20 @@ function TaskCard({ task, onEdit, onStatusChange, onDragStart, isDragging }) {
     <div
       draggable
       onDragStart={(e) => onDragStart(e, task)}
-      className={`bg-white border border-gray-200 rounded-lg p-4 cursor-move hover:shadow-md transition-all ${
-        isDragging ? 'opacity-50' : ''
-      }`}
+      className={`bg-white border rounded-lg p-4 cursor-move transition-all duration-200 hover:shadow-lg relative
+        ${isDragging ? 'opacity-50' : ''}
+        ${isOverdue ? 'border-red-400 shadow-red-200 animate-pulse' : isDueToday ? 'border-yellow-400 shadow-yellow-100' : 'border-gray-200'}
+      `}
+      title={isOverdue ? 'Overdue Task' : isDueToday ? 'Due Today' : 'Task Card'}
+      aria-label={isOverdue ? 'Overdue Task' : isDueToday ? 'Due Today' : 'Task Card'}
     >
+      {/* Overdue/Today Badge */}
+      {isOverdue && (
+        <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded shadow" title="Overdue">Overdue</span>
+      )}
+      {isDueToday && !isOverdue && (
+        <span className="absolute top-2 right-2 bg-yellow-400 text-white text-xs px-2 py-0.5 rounded shadow" title="Due Today">Today</span>
+      )}
       {/* Task Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2">
@@ -546,10 +622,12 @@ function TaskCard({ task, onEdit, onStatusChange, onDragStart, isDragging }) {
               onStatusChange(task, task.status === "done" ? "todo" : "done");
             }}
             className="mt-1"
+            title={task.status === 'done' ? 'Mark as To Do' : 'Mark as Done'}
+            aria-label={task.status === 'done' ? 'Mark as To Do' : 'Mark as Done'}
           >
             <span className={`material-icons-outlined text-lg ${
               task.status === "done" ? "text-green-600" : "text-gray-400"
-            }`}>
+            }`} title={task.status === 'done' ? 'Done' : 'To Do'}>
               {task.status === "done" ? "check_circle" : "radio_button_unchecked"}
             </span>
           </button>
@@ -563,8 +641,10 @@ function TaskCard({ task, onEdit, onStatusChange, onDragStart, isDragging }) {
             onEdit(task);
           }}
           className="text-gray-400 hover:text-gray-600 transition-colors"
+          title="More Actions"
+          aria-label="More Actions"
         >
-          <span className="material-icons-outlined text-sm">more_vert</span>
+          <span className="material-icons-outlined text-sm" title="More">more_vert</span>
         </button>
       </div>
 
