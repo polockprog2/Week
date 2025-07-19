@@ -3,6 +3,7 @@ import GlobalContext from "../context/GlobalContext";
 import "../assets/styles.css";
 import dayjs from "dayjs";
 import { eventsApi } from "../services/api";
+import UserContext from '../context/UserContext';
 
 
 const labelsClasses = [
@@ -28,6 +29,8 @@ export default function EventModal() {
     setSelectedTask,
     dispatchCalTask,
   } = useContext(GlobalContext);
+
+  const { user } = useContext(UserContext);
 
   const [selectedDay, setSelectedDay] = useState(initialDaySelected);
   const [endDay, setEndDay] = useState(
@@ -111,6 +114,7 @@ export default function EventModal() {
       LastUpdated: Date.now(),
       isMultiDay: selectedDay.length > 1,
       Views: JSON.stringify(['month', 'week', 'day']),
+      userId: user?.userId,
       // Guests: guests.join(',') // Only if backend supports this field,after user confirmation
     };
 

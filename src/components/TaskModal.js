@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import { tasksApi } from "../services/api";
 import dayjs from "dayjs";
-
+import UserContext from '../context/UserContext';
 
 
 const priorityClasses = ["low", "medium", "high"];
@@ -22,6 +22,8 @@ export default function TaskModal() {
     dispatchCalEvent,
     fetchTasks, // get fetchTasks from context
   } = useContext(GlobalContext);
+
+  const { user } = useContext(UserContext);
 
   // Always use fallback values for controlled inputs
   const [title, setTitle] = useState(selectedTask?.title || "");
@@ -77,7 +79,7 @@ export default function TaskModal() {
       priority,
       status,
       label: selectedLabel,
-      UserId: 1,
+      userId: user?.userId,
       CreatedAt: dayjs(createdAtValue).format("YYYY-MM-DDTHH:mm"),
       UpdatedAt: dayjs(now).format("YYYY-MM-DDTHH:mm"),
     };

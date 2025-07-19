@@ -1,7 +1,8 @@
-import React, { useState, useReducer, useEffect, useMemo } from "react";
+import React, { useState, useReducer, useEffect, useMemo, useContext } from "react";
 import dayjs from "dayjs";
 import GlobalContext from "./GlobalContext";
 import { eventsApi, tasksApi, venuesApi, venueBookingsApi } from "../services/api";
+import UserContext from "./UserContext";
 
 function savedEventsReducer(state, { type, payload }) {
   switch (type) {
@@ -64,6 +65,7 @@ export default function ContextWrapper(props) {
   const [savedEvents, dispatchCalEvent] = useReducer(savedEventsReducer, []);
   const [savedTasks, dispatchCalTask] = useReducer(savedTasksReducer, []);
   const [savedVenues, dispatchCalVenue] = useReducer(savedVenuesReducer, []);
+  const { user } = useContext(UserContext);
 
   // Fetch events from backend
   useEffect(() => {
@@ -122,22 +124,26 @@ export default function ContextWrapper(props) {
   }, []);
   
   const filteredEvents = useMemo(() => {
+    if (!user) return [];
     return savedEvents.filter((evt) =>
+      (evt.userId === user.userId || evt.UserId === user.userId) &&
       labels
         .filter((lbl) => lbl.checked)
         .map((lbl) => lbl.label)
         .includes(evt.label)
     );
-  }, [savedEvents, labels]);
+  }, [savedEvents, labels, user]);
 
   const filteredTasks = useMemo(() => {
+    if (!user) return [];
     return savedTasks.filter((task) =>
+      (task.userId === user.userId || task.UserId === user.userId) &&
       taskLabels
         .filter((lbl) => lbl.checked)
         .map((lbl) => lbl.label)
         .includes(task.label)
     );
-  }, [savedTasks, taskLabels]);
+  }, [savedTasks, taskLabels, user]);
 
   const filteredVenues = useMemo(() => {
     return savedVenues.filter(venue => 
