@@ -14,6 +14,7 @@ import EventModal from "./components/EventModal";
 import TaskModal from "./components/TaskModal";
 import VenueModal from "./components/VenueModal";
 import AgendaView from "./components/AgendaView";
+import TaskManagement from "./components/TaskManagement";
 
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
             {viewMode === "year" && <YearView year={dayjs().year()} />}
             {viewMode === "venues" && <Venues />}
             {viewMode === "agenda" && <AgendaView />}
+            {viewMode === "tasks" && <TaskManagement />}
           </div>
         </div>
       </div>

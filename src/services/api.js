@@ -22,6 +22,8 @@ export const eventsApi = {
         api.put(`/Event/${id}`, event),
     delete: (id) => 
         api.delete(`/Event/${id}`),
+    searchUsers: (searchQuery) =>
+        api.get('/Users', { params: { search: searchQuery } }),
 };
 
 // Tasks API
@@ -77,5 +79,7 @@ export const usersApi = {
         }),
     logout: () =>
         api.post('/Users/logout'),
+    search: (searchQuery) =>
+        api.get('/Users', { params: { search: searchQuery } }),
 };
 export default api;

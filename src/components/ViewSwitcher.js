@@ -61,9 +61,27 @@ export default function ViewSwitcherDropdown() {
             </button>
             <button
               className={`block px-4 py-2 text-sm text-gray-700 w-full text-left ${viewMode === "year" ? "active" : ""}`}
-              onClick={() => handleViewChange("day")}
+              onClick={() => handleViewChange("year")}
             >
               Year View
+            </button>
+            <button
+              className={`block px-4 py-2 text-sm text-gray-700 w-full text-left ${viewMode === "agenda" ? "active" : ""}`}
+              onClick={() => handleViewChange("agenda")}
+            >
+              Agenda View
+            </button>
+            <button
+              className={`block px-4 py-2 text-sm text-gray-700 w-full text-left ${viewMode === "venues" ? "active" : ""}`}
+              onClick={() => handleViewChange("venues")}
+            >
+              Venues
+            </button>
+            <button
+              className={`block px-4 py-2 text-sm text-gray-700 w-full text-left ${viewMode === "tasks" ? "active" : ""}`}
+              onClick={() => handleViewChange("tasks")}
+            >
+              Task Management
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import GlobalContext from "../context/GlobalContext";
 import "../assets/styles.css";
 import dayjs from "dayjs";
@@ -72,6 +72,73 @@ export default function EventModal() {
   const [guests, setGuests] = useState(
     selectedEvent && selectedEvent.guests ? selectedEvent.guests : []
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef(null);
+
+  // Handle search input changes with debouncing
+  function handleSearchChange(e) {
+    const query = e.target.value;
+    setSearchQuery(query);
+    setShowSearchResults(query.length > 0);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce search requests
+    if (query.length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(query);
+      }, 300);
+    } else {
+      setSearchResults([]);
+    }
+  }
+
+  // Perform the actual search
+  async function performSearch(query) {
+    if (query.length < 2) return;
+    
+    setIsSearching(true);
+    try {
+      const response = await eventsApi.searchUsers(query);
+      setSearchResults(response.data || []);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  // Handle user selection from search results
+  function handleSelectUser(user) {
+    if (!guests.includes(user.email)) {
+      setGuests([...guests, user.email]);
+    }
+    setSearchQuery("");
+    setShowSearchResults(false);
+  }
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      const searchInput = event.target.closest('input[name="searchGuests"]');
+      const searchResults = event.target.closest('.search-results');
+      if (!searchInput && !searchResults) {
+        setShowSearchResults(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedEvent || selectedTask) {
@@ -160,13 +227,7 @@ export default function EventModal() {
   }
   }
 
-  function handleAddGuest(e) {
-    e.preventDefault();
-    if (email.trim() && !guests.includes(email.trim())) {
-      setGuests([...guests, email.trim()]);
-      setEmail("");
-    }
-  }
+
 
   const handleTypeChange = (type) => {
     if (type === 'task') {
@@ -356,22 +417,59 @@ export default function EventModal() {
               <span className="text-gray-600">Guests</span>
             </div>
             <div className="space-y-2">
-              <div className="flex gap-x-2">
+              <div className="relative">
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Add guests"
-                  value={email}
-                  className="flex-1 pt-3 border-0 text-gray-600 pb-2 border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  name="searchGuests"
+                  placeholder="Search users by email..."
+                  value={searchQuery}
+                  className="w-full pt-3 border-0 text-gray-600 pb-2 border-b-2 border-gray-200 focus:outline-none focus:ring-0 focus:border-blue-500"
+                  onChange={handleSearchChange}
+                  onFocus={() => searchQuery.length > 0 && setShowSearchResults(true)}
                 />
-                <button
-                  type="button"
-                  onClick={handleAddGuest}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Add
-                </button>
+                {isSearching && (
+                  <span className="material-icons-outlined absolute right-2 top-2 text-gray-400 search-loading text-sm">
+                    refresh
+                  </span>
+                )}
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="search-results absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                    {searchResults.map((user) => (
+                      <div
+                        key={user.userId}
+                        className="search-result-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => handleSelectUser(user)}
+                      >
+                        <div className="flex-shrink-0 mr-3">
+                          {user.profileImage ? (
+                            <img
+                              src={`/api/images/${user.profileImage}`}
+                              alt={user.email}
+                              className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                              onError={(e) => {
+                                e.target.src = "https://via.placeholder.com/32x32/6B7280/FFFFFF?text=" + user.email.charAt(0).toUpperCase();
+                              }}
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-xs">
+                              {user.email.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {user.email}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 ml-2">
+                          <span className="material-icons-outlined text-gray-400 text-sm">
+                            person_add
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {guests.length > 0 && (
                 <div className="flex flex-wrap gap-2">

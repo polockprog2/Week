@@ -9,6 +9,7 @@ The **Calendar & Event Management App** helps users efficiently manage schedules
 
 - **Event Creation & Editing:** Add, update, or delete events with details like title, description, location, and time.
 - **Task Management:** Convert events to tasks with due dates and priorities.
+- **Advanced Task Management:** Jira-like kanban board with drag-and-drop functionality, list view, filters, and search.
 - **Multi-Day Selection:** Manage events spanning multiple days.
 - **Reminders:** Set custom reminders for upcoming events.
 - **Guest Invitations:** Add guests via email and manage the guest list.
@@ -80,8 +81,12 @@ Ensure your REST API for events/tasks is running and accessible.
 2. Update details as needed or click **"Delete"** to remove the event.
 
 ### Managing Tasks
-1. Switch to the **task view** to add, edit, or delete tasks.
-2. Tasks can be converted to events and vice versa.
+1. Switch to the **Task Management** view to access the advanced task management interface.
+2. Use the **Kanban Board** for drag-and-drop task organization.
+3. Switch to **List View** for detailed task information in table format.
+4. Filter tasks by status, priority, or search for specific tasks.
+5. Use keyboard shortcuts: **Ctrl+N** to create new tasks.
+6. Tasks can be converted to events and vice versa.
 
 ### Adding Guests
 1. Enter guest emails in the event modal.
@@ -110,6 +115,15 @@ Manages global state for events, tasks, and modal visibility.
 
 ### `eventsApi.js`
 Handles API requests for creating, updating, and deleting events.
+
+### `TaskManagement.js`
+Advanced task management interface with Jira-like functionality:
+- **Kanban Board**: Drag-and-drop task organization with status columns
+- **List View**: Detailed table view with sorting and filtering
+- **Real-time Search**: Search tasks by title or description
+- **Advanced Filters**: Filter by status, priority, and overdue tasks
+- **Task Statistics**: Visual overview of task distribution
+- **Keyboard Shortcuts**: Quick task creation with Ctrl+N
 
 ---
 
